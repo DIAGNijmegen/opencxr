@@ -52,8 +52,8 @@ def rescale_to_min_max(np_array_in,
     return scaled.astype(new_dtype)
 
 
-def do_resize_isotropic(np_array_img, old_spacing, new_size_for_axis,
-                        axis_specified=1, anti_aliasing=True, interp_order=1):
+def resize_isotropic(np_array_img, old_spacing, new_size_for_axis,
+                     axis_specified=1, anti_aliasing=True, interp_order=1):
     """
     A method which reads in a 2D np array representing an image and resizes it
     to have isotropic spacing based on the original spacing and the new size
