@@ -6,6 +6,8 @@ Created on Mon Oct 21 12:11:36 2019
 """
 import numpy as np
 from scipy.ndimage import binary_dilation, find_objects
+from resize_rescale import rescale_to_min_max
+import skimage.feature
 
 
 def set_non_mask_constant(img_np, mask_np,
@@ -53,6 +55,129 @@ def crop_to_mask(img_np, mask_np, margin_in_pixels):
     crop_img = img_np[min_x_mask:max_x_mask, min_y_mask:max_y_mask]
 
     return crop_img
+
+
+def crop_img_borders_by_edginess(img_np_array,
+                                 width_edgy_threshold=50,
+                                 dist_edgy_threshold=100):
+    """
+    Method to crop homogeneous border regions based on edge detection:
+    1) do an edge detection to pick up edges belonging to the image content
+    2) crop to the region which contains edge information
+                                        (exclude small isolated edgy regions)
+    Parameters:
+    img_np_array - the input image
+    width_edgy_threshold - the threshold (in pixels) to define
+                           an edgy region as 'small'
+    dist_edgy_threshold - the threshold (in pixels) to define an edgy region as
+                          'distant' from other edgy regions
+    """
+    def find_starts_ends_edgy_regions_axis(edge_img_np_array, axis_to_check):
+        """
+        inner function to count edge pixels and identify (per row, per axis)
+        where the regions with edges start and end
+        """
+        count_edges = []
+        start_end_edgy_regions = []
+        for ind in range(0, edge_img_np_array.shape[axis_to_check]):
+            count_edge_pixels = np.sum(edge_img_np_array[ind, :]
+                                       if axis_to_check == 0
+                                       else edge_img_np_array[:, ind])
+            count_edges.append(count_edge_pixels)
+            if ind == 0:
+                # start an edgy region if there are immediately edges present
+                if count_edge_pixels > 0:
+                    start_end_edgy_regions.append(ind)
+                continue
+            if ind == img_np_array.shape[axis_to_check]-1:
+                # if previous one was non-zero we were in an edgy region
+                # so add the ending
+                if count_edges[ind-1] > 0:
+                    start_end_edgy_regions.append(ind)
+                # if the last row is an isolated edgy region
+                # add it as a start and end also.
+                elif count_edges[ind-1] == 0 and count_edge_pixels > 0:
+                    start_end_edgy_regions.append(ind)
+                    start_end_edgy_regions.append(ind)
+                continue
+
+            # otherwise we are somewhere in the middle
+            if count_edge_pixels > 0 and count_edges[ind-1] == 0:
+                # add start location for edgy region
+                start_end_edgy_regions.append(ind)
+            elif count_edge_pixels == 0 and count_edges[ind-1] > 0:
+                # add end location for edgy region
+                start_end_edgy_regions.append(ind)
+
+        return start_end_edgy_regions
+
+    def remove_small_isolated_edgy_regions(starts_ends_edgy_regions):
+        """
+        inner function to remove the edgy regions which are small or isolated
+        """
+        # print('starts and ends are ', starts_ends_edgy_regions)
+        starts_ends_retain = []
+        for start_edgy_index in range(0, len(starts_ends_edgy_regions), 2):
+            start_edgy = starts_ends_edgy_regions[start_edgy_index]
+            end_edgy = starts_ends_edgy_regions[start_edgy_index+1]
+            print('found start and end', start_edgy, end_edgy)
+            width_edgy = end_edgy - start_edgy + 1
+            print('found width ', width_edgy)
+
+            dist_next_edgy = 10000
+            dist_prev_edgy = 10000
+            # if a subsequent edgy region exists
+            if start_edgy_index + 2 < len(starts_ends_edgy_regions):
+                start_next_edgy = starts_ends_edgy_regions[start_edgy_index+2]
+                dist_next_edgy = start_next_edgy - end_edgy
+            # if a previous edgy region exists
+            if start_edgy_index - 2 >= 0:
+                end_prev_edgy = starts_ends_edgy_regions[start_edgy_index-1]
+                dist_prev_edgy = start_edgy - end_prev_edgy
+
+            isolated_left = (dist_prev_edgy > dist_edgy_threshold)
+            isolated_right = (dist_next_edgy > dist_edgy_threshold)
+
+            is_small_edgy_region = width_edgy < width_edgy_threshold
+            is_isolated_edgy_region = isolated_left and isolated_right
+
+            if not (is_small_edgy_region and is_isolated_edgy_region):
+                starts_ends_retain.append(start_edgy)
+                starts_ends_retain.append(end_edgy)
+        # print('starts and ends i will retain are ', starts_ends_retain)
+        return starts_ends_retain
+
+    # Now start the main work:
+    # Parameters of Canny are based on the input being in range 0-65535
+    # so need to force this before we run Canny
+    img_for_edge_det = rescale_to_min_max(img_np_array, new_dtype=np.uint16)
+
+    edge_img = skimage.feature.canny(image=img_for_edge_det.astype(np.float32),
+                                     sigma=5.0,
+                                     low_threshold=0.0,
+                                     high_threshold=500.0)
+    # convert from boolean
+    edge_img = edge_img.astype(np.uint8)
+
+    # Now crop according to where the "edgy" region of the image is
+    start_end_edges_x = find_starts_ends_edgy_regions_axis(edge_img, 0)
+    start_end_edges_x = remove_small_isolated_edgy_regions(start_end_edges_x)
+
+    start_end_edges_y = find_starts_ends_edgy_regions_axis(edge_img, 1)
+    start_end_edges_y = remove_small_isolated_edgy_regions(start_end_edges_y)
+
+    start_x = start_end_edges_x[0]
+    end_x = start_end_edges_x[len(start_end_edges_x)-1]
+    start_y = start_end_edges_y[0]
+    end_y = start_end_edges_y[len(start_end_edges_y)-1]
+
+    # print('Will finally crop from edginess x', start_x, end_x)
+    # print('Will finally crop from edginess y', start_y, end_y)
+
+    out_img_np_array = img_np_array[start_x:end_x,
+                                    start_y:end_y]
+
+    return out_img_np_array, [start_x, end_x, start_y, end_y]
 
 
 def crop_img_borders(img_np_array, in_thresh_factor=0.05):
