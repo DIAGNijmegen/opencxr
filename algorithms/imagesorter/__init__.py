@@ -14,8 +14,10 @@ class ImageSorterAlgorithm(BaseAlgorithm):
         
     # public method, locs can be both filenames or both foldernames
     def run(self, input_loc, output_loc):
-        # Do stuff common to all algorithms 
+        # Do stuff common to all algorithms (check valid in/out locations etc)
         BaseAlgorithm.run(self, input_loc, output_loc)
+        # if input and output are folders then iterate over contents
+        # otherwise just run directly on input and output files
         
     # private method to run on individual files
     def __run_filein_fileout(self, input_file_name, output_file_name):

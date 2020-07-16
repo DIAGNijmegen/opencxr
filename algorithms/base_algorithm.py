@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import string
 
+
 # TODO: move this elsewhere??
 def is_path_safe(path):
     safechars = string.ascii_letters + string.digits + "~ -_."
@@ -17,11 +18,14 @@ def is_path_safe(path):
         if any((c not in safechars) for c in item):
             return False
     return True
-        
+
+
 class BaseAlgorithm():
-    def __init__(self):
-        pass # stuff to run on instance creation goes here
+    valid_extensions = ['.mha', '.MHA', '.mhd', '.MHD', '.png', '.PNG']
     
+    def __init__(self):
+        pass  # stuff to run on instance creation goes here
+
     def run(self, input_loc, output_loc):
         # check that the output location does not contain illegal characters (linux would allow creation of files/folders with these)
         if not is_path_safe(output_loc):
@@ -31,7 +35,16 @@ class BaseAlgorithm():
             # Check that the output_location is (or can be) a folder
             os.makedirs(output_loc, exist_ok=True)
             if not os.path.isdir(output_loc):
-                raise FileNotFoundError('Could not create output folder at {}'.format(output_loc))    
+                raise FileNotFoundError('Could not create output folder at {}'.format(output_loc))
+            # check that the input location contains at least one valid file
+            found_valid_file = False
+            
+            for e in self.valid_extensions:   
+                if any(fname.endswith(e) for fname in os.listdir(input_loc)):
+                    found_valid_file = True
+                    break
+            if not found_valid_file:
+                raise FileNotFoundError('Could not find file with valid extension in {}'.format(input_loc))
             print('folder input and output found valid')
         # if the input location is a file
         elif os.path.isfile(input_loc):
@@ -43,4 +56,3 @@ class BaseAlgorithm():
             print('file input and output found valid')
         else:
             raise FileNotFoundError('Could not find location {}'.format(input_loc))
-        
