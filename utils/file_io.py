@@ -9,6 +9,7 @@ import os
 import pydicom
 import png  # pypng library to allow management of 16 bit png files
 
+
 """
 Methods to read and write images of various formats
 By convention we return images as numpy arrays where
@@ -45,18 +46,26 @@ def read_file(in_img_location):
 def read_png(in_img_location):
     """
     Reads png images, 8 bit or 16 bit
+    
+    NOTE, if considering re-writing this using sitk to read the png, check out image at /BIMCV-COVID19/sub-S03214/ses-E07979
+    This one reads as a 4 channel RGB image.  In imagesorter this is handled using color.rgb2gray(color.rgba2rgb(img_x_y)) (preprocess.py)
+    But the whole thing did not work properly if I used sitk to read the png image.... check this again before deciding to switch to sitk reader    
     """
     r = png.Reader(in_img_location)
     (width, height, pixels, meta) = r.asDirect()
     bit_depth = meta['bitdepth']
     if bit_depth == 16:
+        # print('bit depth 16')
         image_2d = np.transpose(np.vstack(list(map(np.uint16, pixels))))
+        # print('shape is', image_2d.shape)
     elif bit_depth == 8:
+        # print('bit depth 8')
         image_2d = np.transpose(np.vstack(list(map(np.uint8, pixels))))
+        # print('shape is ', image_2d.shape)
     else:
         raise Exception('Bit depth of {} is not supported. \
                         Expected 8 or 16'.format(bit_depth))
-    return np.squeeze(image_2d)
+    return np.squeeze(image_2d), '', ''
 
 
 def read_mhd_mha(in_img_location):
@@ -69,7 +78,7 @@ def read_mhd_mha(in_img_location):
     img_np_x_y = np.squeeze(np.transpose(sitk.GetArrayFromImage(itk_img)))
     spacing_x_y = np.transpose(itk_img.GetSpacing())
 
-    return img_np_x_y, spacing_x_y
+    return img_np_x_y, spacing_x_y, ''
 
 
 def read_dicom(in_img_location):
