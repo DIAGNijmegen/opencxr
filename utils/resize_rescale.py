@@ -121,7 +121,8 @@ def resize_to_x_y(np_array_img, old_spacing, new_size_0, new_size_1,
                                                        anti_aliasing=True)
     """
     new_img = resize(image=np_array_img, output_shape=(new_size_0, new_size_1),
-                     preserve_range=True, mode='reflect')
+                     preserve_range=True, mode='reflect', anti_aliasing=anti_aliasing,
+                               order=interp_order)
     new_spacing_x = old_spacing[0] * np_array_img.shape[0] / new_size_0
     new_spacing_y = old_spacing[1] * np_array_img.shape[1] / new_size_1
 
