@@ -280,4 +280,4 @@ def crop_img_borders(img_np_array, in_thresh_factor=0.05):
     out_img_np_array = img_np_array[xmin_stored:xmax_stored+1,
                                     ymin_stored:ymax_stored]
     # return the image and the crop values
-    return out_img_np_array, [xmin, xmax, ymin, ymax]
+    return out_img_np_array, [xmin_stored, xmax_stored+1,ymin_stored,ymax_stored]
