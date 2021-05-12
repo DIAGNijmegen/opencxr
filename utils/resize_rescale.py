@@ -127,3 +127,61 @@ def resize_to_x_y(np_array_img, old_spacing, new_size_0, new_size_1,
     new_spacing_y = old_spacing[1] * np_array_img.shape[1] / new_size_1
 
     return new_img, [new_spacing_x, new_spacing_y]
+
+def resize_preserve_aspect_ratio(np_array_img, old_spacing, new_size_for_axis, axis_specified, anti_aliasing=True, interp_order=1):
+    """
+    A method to resize an image preserving the aspect ratio.  One new edge size is specified and the axis
+    that is to be resized to that size.  The other dimension will be resized accordingly.
+    :param np_array_img: The input image
+    :param new_size_for_axis: The length being specified for one axis
+    :param axis_specified: The axis to be resized to the given length
+    :param anti_aliasing:
+    :param interp_order:
+    :return: The resized image
+    """
+    if axis_specified == 0:
+        mult_factor = new_size_for_axis/np_array_img.shape[0]
+        new_shape_0 = new_size_for_axis
+        new_shape_1 = int(np.round(np_array_img.shape[1]*mult_factor))
+    else:
+        mult_factor = new_size_for_axis/np_array_img.shape[1]
+        new_shape_0 = int(np.round(np_array_img.shape[0]*mult_factor))
+        new_shape_1 = new_size_for_axis
+
+    return resize_to_x_y(np_array_img, old_spacing, new_shape_0, new_shape_1,
+                  anti_aliasing, interp_order)
+
+
+def resize_long_edge_and_pad_to_square(np_array_img, old_spacing, square_edge_size, pad_value=0, anti_aliasing=True, interp_order=1):
+    """
+    A method to resize an image to a square size (square_edge_size * square_edge_size) without changing aspect ratio
+    The image is first resized, preserving aspect ratio, such that the longer edge is of length square_edge_size
+    The shorter edge is then padded (split across left/right or top/bottom) to bring it to the same length.
+    :param np_array_img: the input image
+    :param square_edge_size: the output edge length
+    :param pad_value: the intensity value for padding pixels
+    :return: the resized image
+    """
+    shape_x, shape_y = np_array_img.shape
+
+    if shape_x >= shape_y:
+        # do resize
+        img_resized, new_spacing = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, axis_specified=0)
+
+        # pad smaller dimension (in this case top and bottom)
+        diff = square_edge_size - img_resized.shape[1]
+        top_pad = int(np.round(float(diff)/2))
+        bottom_pad = square_edge_size - img_resized.shape[1] - top_pad
+        img_resized = np.pad(img_resized, ((0,0),(top_pad,bottom_pad)), 'constant', constant_values=pad_value)
+
+    else:
+        # do resize
+        img_resized, new_spacing = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, axis_specified=1)
+
+        # pad smaller dimension (in this case left and right)
+        diff = square_edge_size - img_resized.shape[0]
+        left_pad = int(np.round(float(diff)/2))
+        right_pad = square_edge_size - img_resized.shape[0] - left_pad
+        img_resized = np.pad(img_resized, ((left_pad,right_pad), (0,0)), 'constant', constant_values=pad_value)
+
+    return img_resized, new_spacing
