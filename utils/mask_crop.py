@@ -35,7 +35,7 @@ def set_non_mask_constant(img_np, mask_np,
     return img_np
 
 
-def crop_to_mask(img_np, mask_np, margin_in_pixels):
+def crop_to_mask(img_np, spacing, mask_np, margin_in_mm):
     """
     A method to crop away regions outside the bounding box of a mask
     e.g. crop to smallest rectangle containing lungs
@@ -43,14 +43,18 @@ def crop_to_mask(img_np, mask_np, margin_in_pixels):
     img_np - the original image
     mask_np - the mask to crop around, e.g. lung mask,
                expected as binary 1,0 values
-    margin_in_pixels - a margin to allow around the tightest bounding box
+    margin_in_mm - a margin to allow around the tightest bounding box
     """
+    # convert margin in mm to margin_in_pixels for each of x and y
+    margin_in_pixels_x = margin_in_mm / spacing[0]
+    margin_in_pixels_y = margin_in_mm / spacing[1]
+
     # get bounding box for mask
     bbox = find_objects(mask_np)
-    min_x_mask = max(bbox[0][0].start - margin_in_pixels, 0)
-    min_y_mask = max(bbox[0][1].start - margin_in_pixels, 0)
-    max_x_mask = min(bbox[0][0].stop + margin_in_pixels, mask_np.shape[0] - 1)
-    max_y_mask = min(bbox[0][1].stop + margin_in_pixels, mask_np.shape[1] - 1)
+    min_x_mask = max(bbox[0][0].start - margin_in_pixels_x, 0)
+    min_y_mask = max(bbox[0][1].start - margin_in_pixels_y, 0)
+    max_x_mask = min(bbox[0][0].stop + margin_in_pixels_x, mask_np.shape[0] - 1)
+    max_y_mask = min(bbox[0][1].stop + margin_in_pixels_y, mask_np.shape[1] - 1)
 
     crop_img = img_np[min_x_mask:max_x_mask, min_y_mask:max_y_mask]
 
