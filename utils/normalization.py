@@ -175,11 +175,11 @@ def get_norm_central_70(img_np, spacing):
     # resize to width of 2048
     img_np, new_spacing = resize_rescale.resize_preserve_aspect_ratio(img_np, spacing, 2048, 0)
     # split into energy bands
-    bands = norm_utils.split_energy_bands(img_np, sigmas)
+    bands = split_energy_bands(img_np, sigmas)
     # get means and stddevs of the energy bands
-    means, stdevs = norm_utils.report_energy_bands(bands)
+    means, stdevs = report_energy_bands(bands)
     # reconstruct an image from the energy bands and the reference values
-    norm_70 = norm_utils.reconstruct(bands, means, stdevs, rick_coeffs70)
+    norm_70 = reconstruct(bands, means, stdevs, rick_coeffs70)
 
     # the norm_70 image can be fed to the next normalization step.  But for a nice readable image we can scale/clip it.
     # set to min, max 0,4095
@@ -211,12 +211,12 @@ def get_norm_lung_mask(img_np_norm70, lung_mask_np):
     rick_coeffs_lungseg = [1, 0.235, 0.169, 0.127, 0.093, 0.113]
     sigmas = [1, 2, 4, 8, 16]
     # split into energy bands
-    bands = norm_utils.split_energy_bands(img_np_norm70, sigmas)
+    bands = split_energy_bands(img_np_norm70, sigmas)
     # get means and stddevs of the energy bands
-    means, stdevs = norm_utils.report_energy_bands(bands, mask=lung_mask_np)
+    means, stdevs = report_energy_bands(bands, mask=lung_mask_np)
 
     # for now we omit this step as it is not part of Rick's paper, but could help in the future
-    # lung_mean, mediastinum_mean = norm_utils_keelin.report_energy_lungs_and_mediastinum(bands[0], means[0], stdevs[0], lungseg)
+    # lung_mean, mediastinum_mean = report_energy_lungs_and_mediastinum(bands[0], means[0], stdevs[0], lungseg)
 
     norm = reconstruct(bands, means, stdevs, rick_coeffs_lungseg)#omit for now:, lung_mean, mediastinum_mean)
 
