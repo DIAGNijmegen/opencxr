@@ -58,7 +58,7 @@ def crop_to_mask(img_np, spacing, mask_np, margin_in_mm):
 
     crop_img = img_np[min_x_mask:max_x_mask, min_y_mask:max_y_mask]
 
-    return crop_img
+    return crop_img, [min_x_mask, max_x_mask, min_y_mask, max_y_mask]
 
 
 def crop_img_borders_by_edginess(img_np_array,
