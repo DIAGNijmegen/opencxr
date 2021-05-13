@@ -46,8 +46,8 @@ def crop_to_mask(img_np, spacing, mask_np, margin_in_mm):
     margin_in_mm - a margin to allow around the tightest bounding box
     """
     # convert margin in mm to margin_in_pixels for each of x and y
-    margin_in_pixels_x = margin_in_mm / spacing[0]
-    margin_in_pixels_y = margin_in_mm / spacing[1]
+    margin_in_pixels_x = int(np.round(margin_in_mm / spacing[0]))
+    margin_in_pixels_y = int(np.round(margin_in_mm / spacing[1]))
 
     # get bounding box for mask
     bbox = find_objects(mask_np)
