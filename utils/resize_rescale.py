@@ -120,6 +120,7 @@ def resize_to_x_y(np_array_img, old_spacing, new_size_0, new_size_1,
                                                        new_size_1=2048,
                                                        anti_aliasing=True)
     """
+    print('about to call resize with interp order of ', interp_order)
     new_img = resize(image=np_array_img, output_shape=(new_size_0, new_size_1),
                      preserve_range=True, mode='reflect', anti_aliasing=anti_aliasing,
                                order=interp_order)
@@ -166,7 +167,7 @@ def resize_long_edge_and_pad_to_square(np_array_img, old_spacing, square_edge_si
 
     if shape_x >= shape_y:
         # do resize
-        img_resized, new_spacing = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, axis_specified=0)
+        img_resized, new_spacing = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, axis_specified=0, anti_aliasing, interp_order)
 
         # pad smaller dimension (in this case top and bottom)
         diff = square_edge_size - img_resized.shape[1]
@@ -176,7 +177,7 @@ def resize_long_edge_and_pad_to_square(np_array_img, old_spacing, square_edge_si
 
     else:
         # do resize
-        img_resized, new_spacing = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, axis_specified=1)
+        img_resized, new_spacing = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, axis_specified=1, anti_aliasing, interp_order)
 
         # pad smaller dimension (in this case left and right)
         diff = square_edge_size - img_resized.shape[0]
