@@ -120,7 +120,6 @@ def resize_to_x_y(np_array_img, old_spacing, new_size_0, new_size_1,
                                                        new_size_1=2048,
                                                        anti_aliasing=True)
     """
-    print('about to call resize with interp order of ', interp_order)
     new_img = resize(image=np_array_img, output_shape=(new_size_0, new_size_1),
                      preserve_range=True, mode='reflect', anti_aliasing=anti_aliasing,
                                order=interp_order)
