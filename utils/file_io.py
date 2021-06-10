@@ -8,6 +8,7 @@ import SimpleITK as sitk
 import os
 import pydicom
 import png  # pypng library to allow management of 16 bit png files
+from skimage import color
 
 
 """
@@ -44,29 +45,40 @@ def read_file(in_img_location):
 
 
 def read_png(in_img_location):
+    # sitk now seems to handle png even better than pypng, which has some issues, so moving to this
+    # weird images to debug with include chest-xray-14 image 00000317_000.png or /BIMCV-COVID19/sub-S03214/ses-E07979
     """
-    Reads png images, 8 bit or 16 bit
-    
-    NOTE, if considering re-writing this using sitk to read the png, check out image at /BIMCV-COVID19/sub-S03214/ses-E07979
-    This one reads as a 4 channel RGB image.  In imagesorter this is handled using color.rgb2gray(color.rgba2rgb(img_x_y)) (preprocess.py)
-    But the whole thing did not work properly if I used sitk to read the png image.... check this again before deciding to switch to sitk reader    
+    A method which reads in a png image and returns it in
+    X(axis 0), Y(axis 1) format with spacing
     """
-    r = png.Reader(in_img_location)
-    (width, height, pixels, meta) = r.asDirect()
-    bit_depth = meta['bitdepth']
-    if bit_depth == 16:
-        # print('bit depth 16')
-        image_2d = np.transpose(np.vstack(list(map(np.uint16, pixels))))
-        # print('shape is', image_2d.shape)
-    elif bit_depth == 8:
-        # print('bit depth 8')
-        image_2d = np.transpose(np.vstack(list(map(np.uint8, pixels))))
-        # print('shape is ', image_2d.shape)
-    else:
-        raise Exception('Bit depth of {} is not supported. \
-                        Expected 8 or 16'.format(bit_depth))
-    return np.squeeze(image_2d), '', ''
+    itk_img = sitk.ReadImage(in_img_location)
+    init_np_array = np.squeeze(sitk.GetArrayFromImage(itk_img))
 
+    # check if the original image is rgb and convert to gray if so
+    if len(init_np_array.shape)<2 or len(init_np_array.shape)>3:
+        print('unable to proceed(1), ', im, ' img shape is ', init_np_array.shape)
+        return
+    if len(init_np_array.shape) == 3:
+        channel_axis = np.argmin(init_np_array.shape)
+        print('channel axis seems to be at ', channel_axis, init_np_array.shape)
+        if channel_axis == 0: #swap axes as channel expected last
+            init_np_array = np.swapaxes(init_np_array, 0, 2)
+            init_np_array = np.swapaxes(init_np_array, 0, 1)
+            print('swapped axes, shape now is ', init_np_array.shape)
+        if init_np_array.shape[2]==4:
+            init_np_array = color.rgb2gray(color.rgba2rgb(init_np_array))
+            print('did 2 transforms, shape now is ', init_np_array.shape)
+        elif init_np_array.shape[2]==3:
+            init_np_array = color.rgb2gray(init_np_array)
+            print('did 1 transform shape now is ', init_np_array.shape)
+        else:
+            print('unable to proceed(2), ', im, ' img shape is ', init_np_array.shape)
+            return
+
+    img_np_x_y = np.transpose(init_np_array)
+    spacing_x_y = np.transpose(itk_img.GetSpacing())
+
+    return img_np_x_y, spacing_x_y, ''
 
 def read_mhd_mha(in_img_location):
     """
@@ -125,10 +137,11 @@ def write_file(out_img_location, img_np_x_y, spacing_x_y=[1.0, 1.0]):
 
 
 def write_png(out_img_location, img_np_x_y):
-    """
-    A method which writes png
-    8 bit or 16 bit supported
-    """
+
+    # A method which writes png
+    # 8 bit or 16 bit supported
+    # still using pypng for this because sitk only supports writing uchar and ushort png images
+
     img_np_y_x = np.transpose(img_np_x_y)
     with open(out_img_location, 'wb') as f:
         if img_np_y_x.dtype == 'uint16':
@@ -147,6 +160,7 @@ def write_png(out_img_location, img_np_x_y):
                             Failed to write {}'.format(out_img_location))
         img_as_list_rows = img_np_y_x.tolist()
         writer.write(f, img_as_list_rows)
+
 
 
 def write_mhd_mha(out_img_location, img_np_x_y, spacing_x_y):
