@@ -105,10 +105,19 @@ def read_dicom(in_img_location):
     itk_image = sitk.ReadImage(in_img_location)
     img_np_x_y = np.squeeze(np.transpose(sitk.GetArrayFromImage(itk_image)))
     spacing_x_y = np.transpose(itk_image.GetSpacing())
+    print('spacing from sitk image is', spacing_x_y)
 
     # Need this for headers, but pydicom cannot read pixel data if it is
     # stored in jpeg2000 compression
     pydicom_version = pydicom.dcmread(in_img_location)
+
+    # Make a correction because sitk seems to read pixel spacing only from the ImagerPixelSpacing dicom tag
+    # In some images that tag is absent but the tag PixelSpacing is available
+    if 'PixelSpacing' in pydicom_version and not 'ImagerPixelSpacing' in pydicom_version:
+        print('PixelSpacing dicom tag is ', pydicom_version.PixelSpacing)
+        spacing_x_y = pydicom_version.PixelSpacing
+
+
     # Remove the pixel data from the pydicom data so only headers are returned
     del pydicom_version.PixelData
     return img_np_x_y, spacing_x_y, pydicom_version
