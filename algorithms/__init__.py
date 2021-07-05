@@ -11,6 +11,7 @@ from opencxr.algorithms.base_algorithm import BaseAlgorithm
 # names to link with correct packages
 image_sorter = 'opencxr.algorithms.imagesorter'
 endotr_tube = 'opencxr.algorithms.endotrachealtube'
+lung_seg = 'opencxr.algorithms.lungsegmentation'
 
 
 def create_algorithm(algorithm_modulename): 

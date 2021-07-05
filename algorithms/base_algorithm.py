@@ -7,7 +7,8 @@ Created on Thu Feb  6 12:38:05 2020
 import os
 from pathlib import Path
 import string
-
+import traceback
+import SimpleITK as sitk
 
 # TODO: move this elsewhere??
 def is_path_safe(path):
@@ -32,6 +33,8 @@ class BaseAlgorithm():
             raise FileNotFoundError('Output location contains illegal characters {}'.format(output_loc))
         # if the input location is a folder
         if os.path.isdir(input_loc):
+            img_names = os.listdir(input_loc)
+            input_dir = [os.path.join(input_loc,i) for i in img_names]
             # Check that the output_location is (or can be) a folder
             os.makedirs(output_loc, exist_ok=True)
             if not os.path.isdir(output_loc):
@@ -48,6 +51,8 @@ class BaseAlgorithm():
             print('folder input and output found valid')
         # if the input location is a file
         elif os.path.isfile(input_loc):
+            # make a list to process.
+            input_dir = [input_loc]
             # Check that the output location is (or can be) a file
             if not os.path.isfile(output_loc):
                 Path(output_loc).touch()
@@ -56,3 +61,18 @@ class BaseAlgorithm():
             print('file input and output found valid')
         else:
             raise FileNotFoundError('Could not find location {}'.format(input_loc))
+        
+        for full_path in input_dir:
+            file = os.path.basename(full_path)
+            file_name, extension = os.path.splitext(file)
+            if extension.lower() in (".mhd", ".mha", ".dcm", ".png", ".jpeg", ".jpg"):
+                input_img = sitk.ReadImage(full_path)
+                self.run_filein_fileout(file_name, input_img, output_loc)
+            else:
+                print('Error: given image does not have any of the following extensions: ".mhd", ".mha", ".dcm", ".png", ".jpeg", ".jpg"')
+    
+    def run_filein_fileout(self, filename, input_file:sitk.Image, output_file):
+        """
+        Run the algorithm on input image, and write the results to output file.
+        """
+        raise NotImplementedError()
