@@ -22,7 +22,7 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
             dropout = False, n_convs_per_layer = 1, lr=0.0007658078359138082)
         
         # change the path here.
-        self.model.load_weights('/mnt/synology/cxr/projects/cxr-cardiomegaly_t7327/processor/modelweights/hyperopt_lung_best_weights.h5')
+        self.model.load_weights('opencxr/algorithms/lungsegmentation/model_weights/lung_seg.h5')
     
     def preprocess(self, image):
         image = image/(np.max(image)/2)-1
