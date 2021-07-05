@@ -29,12 +29,12 @@ import numpy as np
 # Load the algorithm
 lung_segmentation_algorithm = opencxr.load(opencxr.algorithms.lung_segmentation)
 
-# Use the algorithm directly with data
-mock_data = np.zeros((224,224))
-segmentation_result = lung_segmentation_algorithm.segment(mock_data)
+# Run the algorithm on a single file
+lung_segmentation_algorithm.run('/path/to/input_folder/image.mha', '/path/to/output_folder/')
+
 
 # Use the algorithm on a set of images 
-segmentation_results = lung_segmentation_algorithm.segment('/path/to/folder')
+lung_segmentation_algorithm.run('/path/to/input_folder/', '/path/to/output_folder/')
 ```
 
 See the corresponding algorithm documentation for supported functionality.
