@@ -26,8 +26,12 @@ class BaseAlgorithm():
     
     def __init__(self):
         pass  # stuff to run on instance creation goes here
+    
+    def run(self, input_loc):
+        return self.run_filein_fileout(input_loc)
+        
 
-    def run(self, input_loc, output_loc):
+    def run_write(self, input_loc, output_loc):
         # check that the output location does not contain illegal characters (linux would allow creation of files/folders with these)
         if not is_path_safe(output_loc):
             raise FileNotFoundError('Output location contains illegal characters {}'.format(output_loc))
@@ -67,12 +71,15 @@ class BaseAlgorithm():
             file_name, extension = os.path.splitext(file)
             if extension.lower() in (".mhd", ".mha", ".dcm", ".png", ".jpeg", ".jpg"):
                 input_img = sitk.ReadImage(full_path)
-                self.run_filein_fileout(file_name, input_img, output_loc)
+                seg_map = self.run_filein_fileout(input_img)
+                imageio.imwrite(os.path.join(output_loc, file_name + '.png'), seg_map)
+
             else:
                 print('Error: given image does not have any of the following extensions: ".mhd", ".mha", ".dcm", ".png", ".jpeg", ".jpg"')
     
-    def run_filein_fileout(self, filename, input_file:sitk.Image, output_file):
+    def run_filein_fileout(self, input_file:sitk.Image):
         """
         Run the algorithm on input image, and write the results to output file.
         """
         raise NotImplementedError()
+  

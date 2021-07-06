@@ -171,8 +171,10 @@ def resize_long_edge_and_pad_to_square(np_array_img, old_spacing, square_edge_si
         # pad smaller dimension (in this case top and bottom)
         diff = square_edge_size - img_resized.shape[1]
         top_pad = int(np.round(float(diff)/2))
-        bottom_pad = square_edge_size - img_resized.shape[1] - top_pad
+        bottom_pad = diff - top_pad
         img_resized = np.pad(img_resized, ((0,0),(top_pad,bottom_pad)), 'constant', constant_values=pad_value)
+        pad_axis = 1
+        pad_size = diff
 
     else:
         # do resize
@@ -181,7 +183,9 @@ def resize_long_edge_and_pad_to_square(np_array_img, old_spacing, square_edge_si
         # pad smaller dimension (in this case left and right)
         diff = square_edge_size - img_resized.shape[0]
         left_pad = int(np.round(float(diff)/2))
-        right_pad = square_edge_size - img_resized.shape[0] - left_pad
+        right_pad = diff - left_pad
         img_resized = np.pad(img_resized, ((left_pad,right_pad), (0,0)), 'constant', constant_values=pad_value)
-
-    return img_resized, new_spacing
+        pad_axis = 0
+        pad_size = diff
+        
+    return img_resized, new_spacing, pad_size, pad_axis

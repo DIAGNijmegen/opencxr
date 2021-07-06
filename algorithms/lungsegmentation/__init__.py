@@ -10,7 +10,7 @@ from opencxr.algorithms.lungsegmentation.model import unet
 import SimpleITK as sitk
 import numpy as np
 from opencxr.utils.resize_rescale import resize_long_edge_and_pad_to_square
-from skimage import morphology
+from skimage import morphology, transform
 import imageio
 import os
 
@@ -70,21 +70,47 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
     
     def name(self):
         return 'LungSegmentationAlgorithm'
+    
+    def resize_to_original(self, seg_map_np, pad_size, pad_axis, orig_img_shape):
+        """
+        Resize the segmentation map to original dimension.
+        """
+        if pad_size == 0:
+            seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
         
+        else:
+            # remove the padding from the axis where it was added
+            if pad_axis==0:
+                left_pad = int(np.round(float(pad_size)/2))
+                right_pad = pad_size - left_pad
+                seg_map_np = seg_map_np[left_pad:seg_map_np.shape[0]-right_pad,:]
+            elif pad_axis==1:
+                top_pad = int(np.round(float(pad_size)/2))
+                bottom_pad = pad_size - top_pad
+                seg_map_np = seg_map_np[:,top_pad:seg_map_np.shape[1]-bottom_pad]
+            else:
+                print('ERROR: Got a non-zero pad_size (', pad_size, ') but an invalid pad_axis (', pad_axis, ')')
+            # Now the padding is removed we can proceed with the resize:
+            seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
         
-    # method to run on individual files
-    def run_filein_fileout(self, filename, input_file:sitk.Image, output_file):
+        return seg_map_np
+    
+    def run_filein_fileout(self, input_file:sitk.Image):
         image = sitk.GetArrayFromImage(input_file)
+        orig_img_shape = image.shape
+
         image = np.squeeze(image)
         if len(image.shape)>2 and (image.shape[-1]>1):
             image = np.mean(image, axis=-1)
                 
-        resized_img, new_spacing = resize_long_edge_and_pad_to_square(image, input_file.GetSpacing(), 512)
+        resized_img, new_spacing, pad_size, pad_axis = resize_long_edge_and_pad_to_square(image, input_file.GetSpacing(), 512)
         resized_img = self.preprocess(resized_img)
         seg_map = self.process_image(resized_img)
-        imageio.imwrite(os.path.join(output_file, filename+'.png'), sitk.GetArrayFromImage(seg_map))
+        seg_original = self.resize_to_original(sitk.GetArrayFromImage(seg_map), pad_size, pad_axis, orig_img_shape)
         
-        
+        return seg_original
+
+   
         
         
         
