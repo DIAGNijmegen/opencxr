@@ -99,7 +99,16 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
         
         return seg_map_np
     
-    def run_filein_fileout(self, image):
+    def run_data_in_data_out(self, image):
+        """
+
+        Args:
+            image: np array, expected with x, y ordering
+
+        Returns:
+            lung_seg_image: np array, x,y ordering, with 0 for background and 255 for lung
+
+        """
         # transpose because lung segmentation model requires y, x ordering
         image = np.transpose(image)
 
