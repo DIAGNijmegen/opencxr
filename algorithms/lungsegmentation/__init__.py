@@ -95,15 +95,16 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
         
         return seg_map_np
     
-    def run_filein_fileout(self, input_file:sitk.Image):
-        image = sitk.GetArrayFromImage(input_file)
+    def run_filein_fileout(self, image):
+        image = np.transpose(image)
+
         orig_img_shape = image.shape
 
         image = np.squeeze(image)
         if len(image.shape)>2 and (image.shape[-1]>1):
             image = np.mean(image, axis=-1)
                 
-        resized_img, new_spacing, pad_size, pad_axis = resize_long_edge_and_pad_to_square(image, input_file.GetSpacing(), 512)
+        resized_img, new_spacing, pad_size, pad_axis = resize_long_edge_and_pad_to_square(image, (1,1), 512)
         resized_img = self.preprocess(resized_img)
         seg_map = self.process_image(resized_img)
         seg_original = self.resize_to_original(sitk.GetArrayFromImage(seg_map), pad_size, pad_axis, orig_img_shape)

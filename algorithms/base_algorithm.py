@@ -9,6 +9,7 @@ from pathlib import Path
 import string
 import traceback
 import SimpleITK as sitk
+import imageio
 
 # TODO: move this elsewhere??
 def is_path_safe(path):
@@ -71,7 +72,7 @@ class BaseAlgorithm():
             file_name, extension = os.path.splitext(file)
             if extension.lower() in (".mhd", ".mha", ".dcm", ".png", ".jpeg", ".jpg"):
                 input_img = sitk.ReadImage(full_path)
-                seg_map = self.run_filein_fileout(input_img)
+                seg_map = self.run_filein_fileout(sitk.GetArrayFromImage(input_img))
                 imageio.imwrite(os.path.join(output_loc, file_name + '.png'), seg_map)
 
             else:
