@@ -6,13 +6,14 @@
 
 import opencxr
 from pathlib import Path
+from opencxr.utils.file_io import read_file
 
 # Load the algorithm
 # possible algorithms are listed in opencxr/algorithms/__init__.py
 lungseg_algorithm = opencxr.load(opencxr.algorithms.lung_seg)
 # test with numpy array as input
-f_in = 'opencxr/tests/resources/images/test_img1.png'
-img,spacing,_ = opencxr.utils.file_io.read_file(f_in)
+f_in = Path(__file__).parent / "resources" / "images" / "test_img1.png" 
+img,spacing,pydata = read_file(f_in)
 seg_map = lungseg_algorithm.run(img)
 
 
