@@ -7,12 +7,13 @@ Created on Fri July  2 2021
 
 from opencxr.algorithms.base_algorithm import BaseAlgorithm
 from opencxr.algorithms.lungsegmentation.model import unet
-import SimpleITK as sitk
 import numpy as np
 from opencxr.utils.resize_rescale import resize_long_edge_and_pad_to_square
 from skimage import morphology, transform
 import imageio
 import os
+from pathlib import Path
+from opencxr.utils.resize_rescale import rescale_to_min_max
 
 class LungSegmentationAlgorithm(BaseAlgorithm):
     def __init__(self):
@@ -21,8 +22,9 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
             activation = 'elu', initializer = 'he_normal', upsampling = True,\
             dropout = False, n_convs_per_layer = 1, lr=0.0007658078359138082)
         
-        # change the path here.
-        self.model.load_weights('opencxr/algorithms/lungsegmentation/model_weights/lung_seg.h5')
+        path_to_model_file = Path(__file__).parent / "model_weights" / "lung_seg.h5"
+        path_to_model_resolved = str(path_to_model_file.resolve())
+        self.model.load_weights(path_to_model_resolved)
     
     def preprocess(self, image):
         image = image/(np.max(image)/2)-1
@@ -63,9 +65,10 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
 
         segment_map = np.zeros(post_test.shape)
         segment_map[post_test == True] = 255
+        segment_map = segment_map.astype(np.uint8)
 
 
-        return sitk.GetImageFromArray(segment_map)
+        return segment_map
     
     
     def name(self):
@@ -92,10 +95,12 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
                 print('ERROR: Got a non-zero pad_size (', pad_size, ') but an invalid pad_axis (', pad_axis, ')')
             # Now the padding is removed we can proceed with the resize:
             seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
+        seg_map_np = rescale_to_min_max(seg_map_np, np.uint8)
         
         return seg_map_np
     
     def run_filein_fileout(self, image):
+        # transpose because lung segmentation model requires y, x ordering
         image = np.transpose(image)
 
         orig_img_shape = image.shape
@@ -107,8 +112,9 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
         resized_img, new_spacing, pad_size, pad_axis = resize_long_edge_and_pad_to_square(image, (1,1), 512)
         resized_img = self.preprocess(resized_img)
         seg_map = self.process_image(resized_img)
-        seg_original = self.resize_to_original(sitk.GetArrayFromImage(seg_map), pad_size, pad_axis, orig_img_shape)
-        
+        seg_original = self.resize_to_original(seg_map, pad_size, pad_axis, orig_img_shape)
+
+        seg_original = np.transpose(seg_original)
         return seg_original
 
    
