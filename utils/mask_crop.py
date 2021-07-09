@@ -5,8 +5,9 @@ Created on Mon Oct 21 12:11:36 2019
 @author: keelin
 """
 import numpy as np
+import opencxr.utils
 from scipy.ndimage import binary_dilation, find_objects
-from resize_rescale import rescale_to_min_max
+from opencxr.utils.resize_rescale import rescale_to_min_max
 import skimage.feature
 
 
@@ -56,9 +57,8 @@ def crop_to_mask(img_np, spacing, mask_np, margin_in_mm):
     max_x_mask = min(bbox[0][0].stop + margin_in_pixels_x, mask_np.shape[0])
     max_y_mask = min(bbox[0][1].stop + margin_in_pixels_y, mask_np.shape[1])
 
-    crop_img = img_np[min_x_mask:max_x_mask, min_y_mask:max_y_mask]
-
-    return crop_img, [min_x_mask, max_x_mask, min_y_mask, max_y_mask]
+    cropped_img, size_changes = crop_with_params(img_np, [min_x_mask, max_x_mask, min_y_mask, max_y_mask])
+    return cropped_img, size_changes
 
 
 def crop_img_borders_by_edginess(img_np_array,
@@ -178,10 +178,9 @@ def crop_img_borders_by_edginess(img_np_array,
     # print('Will finally crop from edginess x', start_x, end_x)
     # print('Will finally crop from edginess y', start_y, end_y)
 
-    out_img_np_array = img_np_array[start_x:end_x,
-                                    start_y:end_y]
 
-    return out_img_np_array, [start_x, end_x, start_y, end_y]
+    cropped_img, size_changes = crop_with_params(img_np_array, [start_x, end_x, start_y, end_y])
+    return cropped_img, size_changes
 
 
 def crop_img_borders(img_np_array, in_thresh_factor=0.05):
@@ -280,8 +279,57 @@ def crop_img_borders(img_np_array, in_thresh_factor=0.05):
             ymax_stored = ymax
             completed = False
 
-    # crop the image to the relevant sub-image
-    out_img_np_array = img_np_array[xmin_stored:xmax_stored+1,
-                                    ymin_stored:ymax_stored]
-    # return the image and the crop values
-    return out_img_np_array, [xmin_stored, xmax_stored+1,ymin_stored,ymax_stored]
+
+    cropped_img, size_changes = crop_with_params(img_np_array, [xmin_stored, xmax_stored+1, ymin_stored, ymax_stored])
+    return cropped_img, size_changes
+
+def crop_with_params(img_np, array_minx_maxx_miny_maxy):
+    """
+    Crops an image accoring to the 4 params provided
+    Args:
+        img_np:
+        array_minx_maxx_miny_maxy:
+
+    Returns:
+        The cropped image
+        The size changes information
+
+    """
+    minx = array_minx_maxx_miny_maxy[0]
+    maxx = array_minx_maxx_miny_maxy[1]
+    miny = array_minx_maxx_miny_maxy[2]
+    maxy = array_minx_maxx_miny_maxy[3]
+    size_changes = [[opencxr.utils.size_change_crop_with_params, [img_np.shape[0], img_np.shape[1], minx, maxx, miny, maxy]]]
+    print('in crop_with_params, orig size', img_np.shape)
+    cropped_img = img_np[minx:maxx, miny:maxy]
+    print('in crop_with_params, cropped size is ', cropped_img.shape)
+    return cropped_img, size_changes
+
+def uncrop_with_params(img_np, orig_size_x, orig_size_y, array_minx_maxx_miny_maxy, pad_value=0):
+    """
+    Undo a previously applied cropping operation
+    Returns:
+    The uncropped (ie padded) image
+    The size changes information
+    """
+    # the image being passed in was already cropped with the array info given, need to restore it
+    minx = array_minx_maxx_miny_maxy[0]
+    maxx = array_minx_maxx_miny_maxy[1]
+    miny = array_minx_maxx_miny_maxy[2]
+    maxy = array_minx_maxx_miny_maxy[3]
+    pad_top = miny
+    pad_bottom = orig_size_y - maxy
+    pad_left = minx
+    pad_right = orig_size_x - maxx
+
+     # pad top and bottom
+    img_np = np.pad(img_np, ((pad_left,pad_right),(pad_top,pad_bottom)), 'constant', constant_values=pad_value)
+
+    if not img_np.shape[0] == orig_size_x:
+        print('x mismatch', img_np.shape[0], orig_size_x)
+    if not img_np.shape[1] == orig_size_y:
+        print('y mismatch', img_np.shape[1], orig_size_y)
+
+    size_changes = [[opencxr.utils.size_change_uncrop_with_params, [orig_size_x, orig_size_y, minx, maxx, miny, maxy]]]
+    return img_np, size_changes
+

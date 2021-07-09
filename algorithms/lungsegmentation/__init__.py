@@ -8,12 +8,14 @@ Created on Fri July  2 2021
 from opencxr.algorithms.base_algorithm import BaseAlgorithm
 from opencxr.algorithms.lungsegmentation.model import unet
 import numpy as np
+from opencxr.utils import reverse_size_changes_to_img
 from opencxr.utils.resize_rescale import resize_long_edge_and_pad_to_square
-from skimage import morphology, transform
+from skimage import morphology, transform, measure
 import imageio
 import os
 from pathlib import Path
 from opencxr.utils.resize_rescale import rescale_to_min_max
+from scipy import ndimage
 
 class LungSegmentationAlgorithm(BaseAlgorithm):
     def __init__(self):
@@ -74,10 +76,17 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
     def name(self):
         return 'LungSegmentationAlgorithm'
     
-    def resize_to_original(self, seg_map_np, pad_size, pad_axis, orig_img_shape):
+    def resize_to_original(self, seg_map_np, size_changes):
         """
         Resize the segmentation map to original dimension.
         """
+
+        # Just reverse the size changes that were applied to the original image
+        resized_seg_map, _ = reverse_size_changes_to_img(seg_map_np, [1,1], size_changes, anti_aliasing=False, interp_order=0)
+
+        """
+        
+        
         if pad_size == 0:
             seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
         
@@ -95,11 +104,50 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
                 print('ERROR: Got a non-zero pad_size (', pad_size, ') but an invalid pad_axis (', pad_axis, ')')
             # Now the padding is removed we can proceed with the resize:
             seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
-        seg_map_np = rescale_to_min_max(seg_map_np, np.uint8)
+        """
+
+        resized_seg_map = rescale_to_min_max(resized_seg_map, np.uint8)
         
-        return seg_map_np
+        return resized_seg_map
+
+    def get_largest_components(self, np_array, nr_components=None):
+        labels = measure.label(np_array, background=0)
+
+        unique, counts = np.unique(labels, return_counts=True)
+
+        def get_key(item):
+            return item[1]
+
+        counts = sorted(zip(unique, counts), key=get_key, reverse=True)
+        largest_labels = [c[0] for c in counts if c[0] != 0][0:nr_components]
+
+        if len(largest_labels) == 2:
+            return (labels == largest_labels[0]) | (labels == largest_labels[1])
+        else:
+            return np_array
+
+    def tidy_final_mask(self, lung_mask):
+        """
+        A method to fill holes and only keep two largest components before returning final mask
+        Args:
+            image:
+
+        Returns:
+            tidied image
+        """
+        # make binary
+        lung_mask = rescale_to_min_max(lung_mask, np.uint8, 0, 1)
+
+        # fill holes
+        lung_mask = ndimage.binary_fill_holes(lung_mask)
+
+        # Only keep 2 largest components
+        lung_mask = self.get_largest_components(lung_mask, 2).astype(np.uint8)
+
+        lung_mask = rescale_to_min_max(lung_mask, np.uint8, 0, 255)
+        return lung_mask
     
-    def run_data_in_data_out(self, image):
+    def run(self, image):
         """
 
         Args:
@@ -117,13 +165,20 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
         image = np.squeeze(image)
         if len(image.shape)>2 and (image.shape[-1]>1):
             image = np.mean(image, axis=-1)
-                
-        resized_img, new_spacing, pad_size, pad_axis = resize_long_edge_and_pad_to_square(image, (1,1), 512)
-        resized_img = self.preprocess(resized_img)
-        seg_map = self.process_image(resized_img)
-        seg_original = self.resize_to_original(seg_map, pad_size, pad_axis, orig_img_shape)
 
+        # resize to 512 to fit the model (don't care about spacing here)
+        resized_img, new_spacing, size_changes = resize_long_edge_and_pad_to_square(image, (1,1), 512)
+        # do some preprocessing (intensity normalization)
+        resized_img = self.preprocess(resized_img)
+        # get the segmentation_512
+        seg_map = self.process_image(resized_img)
+        # resize the segmentation_512 to the same size as original input
+        seg_original = self.resize_to_original(seg_map, size_changes)
+        # tidy up by removing holes and keeping two largest connected components
+        seg_original = self.tidy_final_mask(seg_original)
+        # transpose to return content the same way it was input
         seg_original = np.transpose(seg_original)
+
         return seg_original
 
    

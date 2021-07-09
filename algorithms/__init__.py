@@ -13,6 +13,7 @@ image_sorter = 'opencxr.algorithms.imagesorter'
 endotr_tube = 'opencxr.algorithms.endotrachealtube'
 lung_seg = 'opencxr.algorithms.lungsegmentation'
 heart_seg = 'opencxr.algorithms.heartsegmentation'
+cxr_standardize = 'opencxr.algorithms.cxrstandardization'
 
 
 def create_algorithm(algorithm_modulename): 

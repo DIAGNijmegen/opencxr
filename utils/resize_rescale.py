@@ -4,7 +4,7 @@ Created on Tue Jul  3 12:10:42 2018
 
 @author: keelin
 """
-
+import opencxr
 from skimage.transform import resize
 import numpy as np
 
@@ -86,21 +86,33 @@ def resize_isotropic(np_array_img, old_spacing, new_size_for_axis,
     resized_array = None
 
     if axis_specified == 0:
-        resized_array = resize(np_array_img,
-                               (new_size_for_axis, new_size_other_axis),
-                               preserve_range=True,
-                               mode='reflect',
-                               anti_aliasing=anti_aliasing,
-                               order=interp_order)
+        resized_array, returned_spacing, size_changes = resize_to_x_y(np_array_img,
+                                                                 old_spacing,
+                                                                 new_size_for_axis,
+                                                                 new_size_other_axis,
+                                                                 anti_aliasing=anti_aliasing,
+                                                                 order=interp_order)
+                            #resize(np_array_img,
+                            #   (new_size_for_axis, new_size_other_axis),
+                            #   preserve_range=True,
+                            #   mode='reflect',
+                            #   anti_aliasing=anti_aliasing,
+                            #   order=interp_order)
     else:
-        resized_array = resize(np_array_img,
-                               (new_size_other_axis, new_size_for_axis),
-                               preserve_range=True,
-                               mode='reflect',
-                               anti_aliasing=anti_aliasing,
-                               order=interp_order)
+        resized_array, returned_spacing, size_changes = resize_to_x_y(np_array_img,
+                                                                 old_spacing,
+                                                                 new_size_other_axis,
+                                                                 new_size_for_axis,
+                                                                 anti_aliasing=anti_aliasing,
+                                                                 order=interp_order)
+                            # resize(np_array_img,
+                            # (new_size_other_axis, new_size_for_axis),
+                            # preserve_range=True,
+                            # mode='reflect',
+                            # anti_aliasing=anti_aliasing,
+                            # order=interp_order)
     resized_array = resized_array.astype(orig_dtype)
-    return np.squeeze(resized_array), [new_spacing, new_spacing]
+    return np.squeeze(resized_array), returned_spacing, size_changes
 
 
 def resize_to_x_y(np_array_img, old_spacing, new_size_0, new_size_1,
@@ -126,7 +138,9 @@ def resize_to_x_y(np_array_img, old_spacing, new_size_0, new_size_1,
     new_spacing_x = old_spacing[0] * np_array_img.shape[0] / new_size_0
     new_spacing_y = old_spacing[1] * np_array_img.shape[1] / new_size_1
 
-    return new_img, [new_spacing_x, new_spacing_y]
+    size_changes = [[opencxr.utils.size_change_resize_to_x_y, [np_array_img.shape[0], np_array_img.shape[1], new_size_0, new_size_1]]]
+
+    return new_img, [new_spacing_x, new_spacing_y], size_changes
 
 def resize_preserve_aspect_ratio(np_array_img, old_spacing, new_size_for_axis, axis_specified, anti_aliasing=True, interp_order=1):
     """
@@ -148,8 +162,11 @@ def resize_preserve_aspect_ratio(np_array_img, old_spacing, new_size_for_axis, a
         new_shape_0 = int(np.round(np_array_img.shape[0]*mult_factor))
         new_shape_1 = new_size_for_axis
 
-    return resize_to_x_y(np_array_img, old_spacing, new_shape_0, new_shape_1,
+    img_out, new_spacing, size_changes = resize_to_x_y(np_array_img, old_spacing, new_shape_0, new_shape_1,
                   anti_aliasing, interp_order)
+
+
+    return img_out, new_spacing, size_changes
 
 
 def resize_long_edge_and_pad_to_square(np_array_img, old_spacing, square_edge_size, pad_value=0, anti_aliasing=True, interp_order=1):
@@ -166,26 +183,81 @@ def resize_long_edge_and_pad_to_square(np_array_img, old_spacing, square_edge_si
 
     if shape_x >= shape_y:
         # do resize
-        img_resized, new_spacing = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, 0, anti_aliasing, interp_order)
+        img_resized, new_spacing, resize_size_changes = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, 0, anti_aliasing, interp_order)
+
 
         # pad smaller dimension (in this case top and bottom)
         diff = square_edge_size - img_resized.shape[1]
-        top_pad = int(np.round(float(diff)/2))
-        bottom_pad = diff - top_pad
-        img_resized = np.pad(img_resized, ((0,0),(top_pad,bottom_pad)), 'constant', constant_values=pad_value)
-        pad_axis = 1
-        pad_size = diff
+        img_padded, pad_size_changes = pad_axis_with_total(img_resized, axis=1, total_pad=diff)
 
     else:
         # do resize
-        img_resized, new_spacing = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, 1, anti_aliasing, interp_order)
+        img_resized, new_spacing, resize_size_changes = resize_preserve_aspect_ratio(np_array_img, old_spacing, square_edge_size, 1, anti_aliasing, interp_order)
 
         # pad smaller dimension (in this case left and right)
         diff = square_edge_size - img_resized.shape[0]
-        left_pad = int(np.round(float(diff)/2))
-        right_pad = diff - left_pad
-        img_resized = np.pad(img_resized, ((left_pad,right_pad), (0,0)), 'constant', constant_values=pad_value)
-        pad_axis = 0
-        pad_size = diff
-        
-    return img_resized, new_spacing, pad_size, pad_axis
+        img_padded, pad_size_changes = pad_axis_with_total(img_resized, axis=0, total_pad=diff)
+
+    # append the pad_size changes on to the resize_size_changes before returning
+    resize_size_changes.extend(pad_size_changes)
+
+    return img_padded, new_spacing, resize_size_changes
+
+def pad_axis_with_total(img_np, axis, total_pad, pad_value=0):
+    """
+    Pad an image with rows (if axis==1) or columns (if axis==0)
+    The total number of rows/columns will be split between the top/bottom or the left/right of the image
+    Args:
+        img_np: the image to be padded
+        axis: the axis to pad (0 pads left/right, 1 pads top/bottom)
+        total_pad: The total number of rows/columns to be add.  Will be split in half.
+
+    Returns:
+        The padded image
+        A size change list detailing the size change made
+
+    """
+    # pad top and bottom
+    if axis==1:
+        top_pad = int(np.round(float(total_pad)/2))
+        bottom_pad = total_pad - top_pad
+        img_np = np.pad(img_np, ((0,0),(top_pad,bottom_pad)), 'constant', constant_values=pad_value)
+
+    elif axis==0:
+        left_pad = int(np.round(float(total_pad)/2))
+        right_pad = total_pad - left_pad
+        img_np = np.pad(img_np, ((left_pad,right_pad), (0,0)), 'constant', constant_values=pad_value)
+
+    return img_np, [[opencxr.utils.size_change_pad_axis_with_total, [axis, total_pad, pad_value]]]
+
+def un_pad_axis_with_total(img_np, axis, total_pad):
+    """
+    Reverse a previous padding of an image removing rows (if axis==1) or columns (if axis==0)
+    The total number of rows/columns removed will be split between the top/bottom or the left/right of the image
+    Args:
+        img_np: the image to be padded
+        axis: the axis to pad (0 pads left/right, 1 pads top/bottom)
+        total_pad: The total number of rows/columns to remove.  Will be split in half.
+
+    Returns:
+        The un-padded image
+        A size change list detailing the size change made
+
+    """
+    # unpad top and bottom
+    if axis==1:
+        top_pad = int(np.round(float(total_pad)/2))
+        bottom_pad = total_pad - top_pad
+        full_height = img_np.shape[1]
+        img_np = img_np[:, top_pad:full_height-bottom_pad]
+        #img_np = np.pad(img_np, ((0,0),(top_pad,bottom_pad)), 'constant', constant_values=pad_value)
+    #unpad left and right
+    elif axis==0:
+        left_pad = int(np.round(float(total_pad)/2))
+        right_pad = total_pad - left_pad
+        full_width = img_np.shape[0]
+        img_np = img_np[left_pad:full_width-right_pad, :]
+        #img_np = np.pad(img_np, ((left_pad,right_pad), (0,0)), 'constant', constant_values=pad_value)
+
+    return img_np, [[opencxr.utils.size_change_unpad_axis_with_total, [axis, total_pad]]]
+

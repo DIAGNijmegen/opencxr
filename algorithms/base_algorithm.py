@@ -11,5 +11,4 @@ class BaseAlgorithm():
     def __init__(self):
         pass  # stuff to run on instance creation goes here
     
-    def run(self, input_loc):
-        return self.run_data_in_data_out(input_loc)
+

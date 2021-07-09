@@ -8,7 +8,7 @@ Created on Mon Oct 21 11:28:21 2019
 from skimage import util
 from skimage.transform import rotate
 from numpy import fliplr, flipud
-from resize_rescale import rescale_to_min_max
+from opencxr.utils.resize_rescale import rescale_to_min_max
 
 
 def invert_grayscale(np_array_in, preserve_dtype=True):
