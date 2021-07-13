@@ -229,7 +229,7 @@ class Normalizer():
         return readable_img
 
     @classmethod
-    def do_full_normalization(cls, img_in, spacing):
+    def do_full_normalization(cls, img_in, spacing, lung_seg_algorithm):
         """
         Does full 2 step normalization including an intermediate lung segmentation
         Returns normalized image
@@ -246,10 +246,8 @@ class Normalizer():
         norm_70, readable_img, new_spacing, size_changes = cls.__get_norm_central_70(img_in, spacing)
 
         # do a lung segmentation on the norm image
-        # Load the algorithm
-        lung_segmentation_algorithm = opencxr.load(opencxr.algorithms.lung_seg)
         # Run the algorithm on our np image
-        lung_seg_mask = lung_segmentation_algorithm.run(readable_img)
+        lung_seg_mask = lung_seg_algorithm.run(readable_img)
 
         # do norm step 2 using the lung segmentation image
         final_norm_img = cls.__get_norm_lung_mask(norm_70, lung_seg_mask)

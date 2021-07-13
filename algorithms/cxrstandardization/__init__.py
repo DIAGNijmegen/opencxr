@@ -15,7 +15,8 @@ from opencxr.utils.mask_crop import crop_to_mask
 class CXRStandardizationAlgorithm(BaseAlgorithm):
 
     def __init__(self):
-        pass
+        # create an instance of lung segmentation algorithm so we only need to do this once
+        self.lung_seg_alg = opencxr.load(opencxr.algorithms.lung_seg)
 
     def name(self):
         return 'CXRStandardizationAlgorithm'
@@ -36,13 +37,12 @@ class CXRStandardizationAlgorithm(BaseAlgorithm):
         """
 
         # normalize intensities (this will also crop black borders and resize image to width 2048 and aspect preserved height)
-        norm_img_np, new_spacing, size_changes_in_norm = Normalizer.do_full_normalization(image_np, spacing)
+        norm_img_np, new_spacing, size_changes_in_norm = Normalizer.do_full_normalization(image_np, spacing, self.lung_seg_alg)
 
 
         if do_crop_to_lung_box:
             #segment lungs on normalized image
-            lungseg_algorithm = opencxr.load(opencxr.algorithms.lung_seg)
-            lung_mask_np = lungseg_algorithm.run(norm_img_np)
+            lung_mask_np = self.lung_seg_alg.run(norm_img_np)
 
             # crop to lung borders
             # first need to make the lung mask binary
