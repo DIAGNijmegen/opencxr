@@ -24,7 +24,7 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
             activation = 'elu', initializer = 'he_normal', upsampling = True,\
             dropout = False, n_convs_per_layer = 1, lr=0.0007658078359138082)
         
-        path_to_model_file = Path(__file__).parent / "model_weights" / "lung_seg.h5"
+        path_to_model_file = Path(__file__).parent.parent / "model_weights" / "lung_seg.h5"
         path_to_model_resolved = str(path_to_model_file.resolve())
         self.model.load_weights(path_to_model_resolved)
     
