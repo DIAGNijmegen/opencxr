@@ -38,12 +38,15 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
 
         return image
     
+    # no longer needed as we use tidy_final_mask
+    """
     def post_process(self, img, size):
-        """Morphologically removes small (less than size) connected regions of 0s or 1s."""
+        # Morphologically removes small (less than size) connected regions of 0s or 1s.
 
         img = morphology.remove_small_objects(img, size)
         img = morphology.remove_small_holes(img, size)
         return img
+    """
     
     def process_image(self, input_image, remove_ratio = 0.05):
         '''
@@ -62,8 +65,9 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
 
         pr_test = self.model.predict(input_image).squeeze()
 
-        pr_test = pr_test > 0.5
-        post_test = self.post_process(pr_test, remove_ratio * np.prod((input_image.shape[0], input_image.shape[1])))
+	# no longer needed as we use tidy_final_mask
+        # pr_test = pr_test > 0.5        
+        # post_test = self.post_process(pr_test, remove_ratio * np.prod((input_image.shape[0], input_image.shape[1])))
 
         segment_map = np.zeros(post_test.shape)
         segment_map[post_test == True] = 255
