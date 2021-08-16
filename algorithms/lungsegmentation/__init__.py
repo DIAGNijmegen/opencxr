@@ -65,12 +65,14 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
 
         pr_test = self.model.predict(input_image).squeeze()
 
-	# no longer needed as we use tidy_final_mask
-        # pr_test = pr_test > 0.5        
+
+        pr_test = pr_test > 0.5
+
+        # no longer needed as we use tidy_final_mask
         # post_test = self.post_process(pr_test, remove_ratio * np.prod((input_image.shape[0], input_image.shape[1])))
 
-        segment_map = np.zeros(post_test.shape)
-        segment_map[post_test == True] = 255
+        segment_map = np.zeros(pr_test.shape)
+        segment_map[pr_test == True] = 255
         segment_map = segment_map.astype(np.uint8)
 
 
