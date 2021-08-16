@@ -249,6 +249,12 @@ class Normalizer():
         # Run the algorithm on our np image
         lung_seg_mask = lung_seg_algorithm.run(readable_img)
 
+        # if the lung seg mask is completely empty this is probably not a lung image at all so we should fail gracefully
+        # i.e. return an empty image
+        if np.max(lung_seg_mask) == 0:
+            print('lung seg finds no lung so cxr standardization returning empty image')
+            return lung_seg_mask, new_spacing, size_changes
+
         # do norm step 2 using the lung segmentation image
         final_norm_img = cls.__get_norm_lung_mask(norm_70, lung_seg_mask)
 

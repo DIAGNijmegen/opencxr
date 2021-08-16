@@ -40,7 +40,7 @@ class CXRStandardizationAlgorithm(BaseAlgorithm):
         norm_img_np, new_spacing, size_changes_in_norm = Normalizer.do_full_normalization(image_np, spacing, self.lung_seg_alg)
 
 
-        if do_crop_to_lung_box:
+        if do_crop_to_lung_box and np.max(norm_img_np)>0:  # if we found a valid std image and we are supposed to crop to lungs
             #segment lungs on normalized image
             lung_mask_np = self.lung_seg_alg.run(norm_img_np)
 

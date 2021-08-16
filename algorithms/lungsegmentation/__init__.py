@@ -178,6 +178,11 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
         resized_img = self.preprocess(resized_img)
         # get the segmentation_512
         seg_map = self.process_image(resized_img)
+
+        # if the seg map has nothing segmented then future rescaling operations will fail so we return immediately in that case
+        if np.max(seg_map) == 0:
+            return np.zeros(orig_img_shape).astype(np.uint8)
+
         # resize the segmentation_512 to the same size as original input
         seg_original = self.resize_to_original(seg_map, size_changes)
         # tidy up by removing holes and keeping two largest connected components
