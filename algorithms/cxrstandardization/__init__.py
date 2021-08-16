@@ -44,13 +44,13 @@ class CXRStandardizationAlgorithm(BaseAlgorithm):
             # then we won't do cropping to lung box - it will cause errors and makes  no sense anyway!
             do_crop_to_lung_box = False
 
-        if not do_crop_to_lung_box:
+        if not do_crop_to_lung_box:  # no cropping to lungs, just resize to specified size and exit
             # resize it to square specified size
             norm_np_resized, newest_spacing, size_changes_square_pad = resize_long_edge_and_pad_to_square(norm_img_np, new_spacing, final_square_size)
             norm_np_resized = np.clip(norm_np_resized, 0, 4095).astype(np.uint16)
             # and join all the size changes that were made, in order
             size_changes_final = size_changes_in_norm + size_changes_square_pad
-            return norm_img_np, newest_spacing, size_changes_final
+            return norm_np_resized, newest_spacing, size_changes_final
 
         elif do_crop_to_lung_box:  # if we found a valid std image and we are supposed to crop to lungs
             #segment lungs on normalized image
