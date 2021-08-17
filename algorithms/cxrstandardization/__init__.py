@@ -55,20 +55,31 @@ class CXRStandardizationAlgorithm(BaseAlgorithm):
         elif do_crop_to_lung_box:  # if we found a valid std image and we are supposed to crop to lungs
             #segment lungs on normalized image
             lung_mask_np = self.lung_seg_alg.run(norm_img_np)
+            if not np.max(lung_mask_np) == 0:  # if all is good and we found a lung segmentation
+                # crop to lung borders
+                # first need to make the lung mask binary
+                lung_mask_np = rescale_to_min_max(lung_mask_np, new_min=0, new_max=1)
+                # then crop to the mask with margin
+                lung_cropped_np, size_changes_lung_crop = crop_to_mask(norm_img_np, new_spacing, lung_mask_np, margin_in_mm=15.0)
 
-            # crop to lung borders
-            # first need to make the lung mask binary
-            lung_mask_np = rescale_to_min_max(lung_mask_np, new_min=0, new_max=1)
-            # then crop to the mask with margin
-            lung_cropped_np, size_changes_lung_crop = crop_to_mask(norm_img_np, new_spacing, lung_mask_np, margin_in_mm=15.0)
+                # now resize the normalized image to max dim specified, preserving aspect ratio and padding to square img.
+                final_lung_cropped_resized, newest_spacing, size_changes_square_pad = resize_long_edge_and_pad_to_square(lung_cropped_np, new_spacing, final_square_size)
+                final_lung_cropped_resized = np.clip(final_lung_cropped_resized, 0, 4095).astype(np.uint16)
+                # and join all the size changes that were made, in order
+                size_changes_final = size_changes_in_norm + size_changes_lung_crop + size_changes_square_pad
+                return final_lung_cropped_resized, newest_spacing, size_changes_final
 
-            # now resize the normalized image to max dim specified, preserving aspect ratio and padding to square img.
-            final_lung_cropped_resized, newest_spacing, size_changes_square_pad = resize_long_edge_and_pad_to_square(lung_cropped_np, new_spacing, final_square_size)
-            final_lung_cropped_resized = np.clip(final_lung_cropped_resized, 0, 4095).astype(np.uint16)
-            # and join all the size changes that were made, in order
-            size_changes_final = size_changes_in_norm + size_changes_lung_crop + size_changes_square_pad
+            else: # no valid lung segmentation found, return an empty image
+                # resize it to square specified size
+                norm_img_np.fill(0)
+                norm_np_resized, newest_spacing, size_changes_square_pad = resize_long_edge_and_pad_to_square(norm_img_np, new_spacing, final_square_size)
+                norm_np_resized = np.clip(norm_np_resized, 0, 4095).astype(np.uint16)
+                # and join all the size changes that were made, in order
+                size_changes_final = size_changes_in_norm + size_changes_square_pad
+                return norm_np_resized, newest_spacing, size_changes_final
 
-            return final_lung_cropped_resized, newest_spacing, size_changes_final
+
+
 
    
         
