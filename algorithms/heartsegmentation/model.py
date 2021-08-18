@@ -4,6 +4,7 @@ from keras.models import Model
 import keras
 import keras.backend as K
 import numpy as np
+import tensorflow as tf
 
 
 
@@ -161,7 +162,7 @@ def unet(x_in, k_size=3, optimizer='adam', depth = 4, downsize_filters_factor = 
     if lr!='default':
         
         if optimizer == 'adam':
-            optimizer = keras.optimizers.Adam(lr=lr)
+            optimizer = tf.keras.optimizers.Adam(lr=lr)
         elif optimizer == 'RMSprop':
             optimizer = keras.optimizers.RMSprop(lr=lr, decay=1e-3)
         elif optimizer == 'adagrad':

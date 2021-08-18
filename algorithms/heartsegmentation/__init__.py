@@ -6,13 +6,16 @@ Created on Fri July  2 2021
 """
 
 from opencxr.algorithms.base_algorithm import BaseAlgorithm
-from opencxr.algorithms.lungsegmentation.model import unet
+from opencxr.algorithms.heartsegmentation.model import unet
 import SimpleITK as sitk
 import numpy as np
-from opencxr.utils.resize_rescale import resize_long_edge_and_pad_to_square
+from opencxr.utils import reverse_size_changes_to_img
+from opencxr.utils.resize_rescale import rescale_to_min_max, resize_long_edge_and_pad_to_square
 from skimage import morphology, transform, measure
 import imageio
 import os
+from scipy import ndimage
+from pathlib import Path
 
 
 class HeartSegmentationAlgorithm(BaseAlgorithm):
@@ -23,7 +26,9 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
             dropout = False, n_convs_per_layer = 2, lr=0.00018521094785555384)
         
         # change the path here.
-        self.model.load_weights('opencxr/algorithms/heartsegmentation/model_weights/heart_seg.h5')
+        path_to_model_file = Path(__file__).parent.parent / "model_weights" / "heart_seg.h5"
+        path_to_model_resolved = str(path_to_model_file.resolve())
+        self.model.load_weights(path_to_model_resolved)
     
     def preprocess(self, image):
         image = image/(np.max(image)/2)-1
@@ -35,34 +40,45 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
 
         return image
     
-    def post_process(self, mask):
-        '''
-        Post-processing step for heart segmentation:
-        Keeps only the largest connected components of each label for a segmentation mask.
-        '''
+    def get_largest_components(self, np_array, nr_components=None):
+        labels = measure.label(np_array, background=0)
 
-        out_img = np.zeros(mask.shape, dtype=np.uint8)
+        unique, counts = np.unique(labels, return_counts=True)
 
-        for struc_id in [1]:
+        def get_key(item):
+            return item[1]
 
-            binary_img = mask == struc_id
-            blobs = measure.label(binary_img, connectivity=1)
+        counts = sorted(zip(unique, counts), key=get_key, reverse=True)
+        largest_labels = [c[0] for c in counts if c[0] != 0][0:nr_components]
 
-            props = measure.regionprops(blobs)
-
-            if not props:
-                continue
-
-            area = [ele.area for ele in props]
-            largest_blob_ind = np.argmax(area)
-            largest_blob_label = props[largest_blob_ind].label
-
-            out_img[blobs == largest_blob_label] = struc_id
-
-        out_img=out_img ==1
-
-        return out_img 
+        if len(largest_labels) == 2:
+            return (labels == largest_labels[0]) | (labels == largest_labels[1])
+        else:
+            return np_array
     
+    def tidy_final_mask(self, heart_mask):
+        """
+        A method to fill holes and only keep two largest components before returning final mask
+        Args:
+            image:
+
+        Returns:
+            tidied image
+        """
+        # make binary
+        heart_mask = rescale_to_min_max(heart_mask, np.uint8, 0, 1)
+
+        # fill holes
+        heart_mask = ndimage.binary_fill_holes(heart_mask)
+
+        # Only keep 2 largest components
+        heart_mask = self.get_largest_components(heart_mask, 1).astype(np.uint8)
+
+        heart_mask = rescale_to_min_max(heart_mask, np.uint8, 0, 255)
+        
+        return heart_mask
+    
+
     def process_image(self, input_image, remove_ratio = 0.05):
         '''
         Produce segmentation map prediction of the network.
@@ -81,55 +97,56 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
         pr_test = self.model.predict(input_image).squeeze()
 
         pr_test = pr_test > 0.5
-        post_test = self.post_process(pr_test)
 
-        segment_map = np.zeros(post_test.shape)
-        segment_map[post_test == True] = 255
+        segment_map = np.zeros(pr_test.shape)
+        segment_map[pr_test == True] = 255
+        segment_map = segment_map.astype(np.uint8)
 
 
-        return sitk.GetImageFromArray(segment_map)
+
+        return segment_map
     
     
     def name(self):
         return 'HeartSegmentationAlgorithm'
     
-    def resize_to_original(self, seg_map_np, pad_size, pad_axis, orig_img_shape):
+    def resize_to_original(self, seg_map_np, size_changes):
         """
         Resize the segmentation map to original dimension.
         """
-        if pad_size == 0:
-            seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
+
+        # Just reverse the size changes that were applied to the original image
+        resized_seg_map, _ = reverse_size_changes_to_img(seg_map_np, [1,1], size_changes, anti_aliasing=False, interp_order=0)
+        resized_seg_map = rescale_to_min_max(resized_seg_map, np.uint8)
         
-        else:
-            # remove the padding from the axis where it was added
-            if pad_axis==0:
-                left_pad = int(np.round(float(pad_size)/2))
-                right_pad = pad_size - left_pad
-                seg_map_np = seg_map_np[left_pad:seg_map_np.shape[0]-right_pad,:]
-            elif pad_axis==1:
-                top_pad = int(np.round(float(pad_size)/2))
-                bottom_pad = pad_size - top_pad
-                seg_map_np = seg_map_np[:,top_pad:seg_map_np.shape[1]-bottom_pad]
-            else:
-                print('ERROR: Got a non-zero pad_size (', pad_size, ') but an invalid pad_axis (', pad_axis, ')')
-            # Now the padding is removed we can proceed with the resize:
-            seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
-        
-        return seg_map_np
+        return resized_seg_map
     
-    def run_filein_fileout(self, input_file:sitk.Image):
-        image = sitk.GetArrayFromImage(input_file)
+    def run(self, image):
+        # transpose because heart segmentation model requires y, x ordering
+        image = np.transpose(image)
+        
         orig_img_shape = image.shape
 
         image = np.squeeze(image)
         if len(image.shape)>2 and (image.shape[-1]>1):
             image = np.mean(image, axis=-1)
                 
-        resized_img, new_spacing, pad_size, pad_axis = resize_long_edge_and_pad_to_square(image, input_file.GetSpacing(), 512)
+        resized_img, new_spacing, size_changes = resize_long_edge_and_pad_to_square(image, (1,1), 512)
         resized_img = self.preprocess(resized_img)
         seg_map = self.process_image(resized_img)
-        seg_original = self.resize_to_original(sitk.GetArrayFromImage(seg_map), pad_size, pad_axis, orig_img_shape)
         
+        # if the seg map has nothing segmented then future rescaling operations will fail so we return immediately in that case
+        if np.max(seg_map) == 0:
+            return np.zeros(orig_img_shape).astype(np.uint8)
+        
+        
+        # resize the segmentation_512 to the same size as original input
+        seg_original = self.resize_to_original(seg_map, size_changes)
+        # tidy up by removing holes and keeping two largest connected components
+        seg_original = self.tidy_final_mask(seg_original)
+        # transpose to return content the same way it was input
+        seg_original = np.transpose(seg_original)
+
         return seg_original
 
    
