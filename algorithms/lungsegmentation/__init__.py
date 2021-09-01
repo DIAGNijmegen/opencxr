@@ -10,12 +10,13 @@ from opencxr.algorithms.lungsegmentation.model import unet
 import numpy as np
 from opencxr.utils import reverse_size_changes_to_img
 from opencxr.utils.resize_rescale import resize_long_edge_and_pad_to_square
-from skimage import morphology, transform, measure
+from skimage import morphology, transform
 import imageio
 import os
 from pathlib import Path
 from opencxr.utils.resize_rescale import rescale_to_min_max
-from scipy import ndimage
+from opencxr.utils.mask_crop import tidy_segmentation_mask
+
 
 class LungSegmentationAlgorithm(BaseAlgorithm):
     def __init__(self):
@@ -90,68 +91,10 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
         # Just reverse the size changes that were applied to the original image
         resized_seg_map, _ = reverse_size_changes_to_img(seg_map_np, [1,1], size_changes, anti_aliasing=False, interp_order=0)
 
-        """
-        
-        
-        if pad_size == 0:
-            seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
-        
-        else:
-            # remove the padding from the axis where it was added
-            if pad_axis==0:
-                left_pad = int(np.round(float(pad_size)/2))
-                right_pad = pad_size - left_pad
-                seg_map_np = seg_map_np[left_pad:seg_map_np.shape[0]-right_pad,:]
-            elif pad_axis==1:
-                top_pad = int(np.round(float(pad_size)/2))
-                bottom_pad = pad_size - top_pad
-                seg_map_np = seg_map_np[:,top_pad:seg_map_np.shape[1]-bottom_pad]
-            else:
-                print('ERROR: Got a non-zero pad_size (', pad_size, ') but an invalid pad_axis (', pad_axis, ')')
-            # Now the padding is removed we can proceed with the resize:
-            seg_map_np = transform.resize(seg_map_np, orig_img_shape, order=0)
-        """
-
         resized_seg_map = rescale_to_min_max(resized_seg_map, np.uint8)
         
         return resized_seg_map
 
-    def get_largest_components(self, np_array, nr_components=None):
-        labels = measure.label(np_array, background=0)
-
-        unique, counts = np.unique(labels, return_counts=True)
-
-        def get_key(item):
-            return item[1]
-
-        counts = sorted(zip(unique, counts), key=get_key, reverse=True)
-        largest_labels = [c[0] for c in counts if c[0] != 0][0:nr_components]
-
-        if len(largest_labels) == 2:
-            return (labels == largest_labels[0]) | (labels == largest_labels[1])
-        else:
-            return np_array
-
-    def tidy_final_mask(self, lung_mask):
-        """
-        A method to fill holes and only keep two largest components before returning final mask
-        Args:
-            image:
-
-        Returns:
-            tidied image
-        """
-        # make binary
-        lung_mask = rescale_to_min_max(lung_mask, np.uint8, 0, 1)
-
-        # fill holes
-        lung_mask = ndimage.binary_fill_holes(lung_mask)
-
-        # Only keep 2 largest components
-        lung_mask = self.get_largest_components(lung_mask, 2).astype(np.uint8)
-
-        lung_mask = rescale_to_min_max(lung_mask, np.uint8, 0, 255)
-        return lung_mask
     
     def run(self, image):
         """
@@ -186,7 +129,7 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
         # resize the segmentation_512 to the same size as original input
         seg_original = self.resize_to_original(seg_map, size_changes)
         # tidy up by removing holes and keeping two largest connected components
-        seg_original = self.tidy_final_mask(seg_original)
+        seg_original = tidy_segmentation_mask(seg_original, nr_components_to_keep=2)
         # transpose to return content the same way it was input
         seg_original = np.transpose(seg_original)
 

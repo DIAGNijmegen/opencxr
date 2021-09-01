@@ -9,6 +9,8 @@ import opencxr.utils
 from scipy.ndimage import binary_dilation, find_objects
 from opencxr.utils.resize_rescale import rescale_to_min_max
 import skimage.feature
+from skimage import measure
+from scipy import ndimage
 
 
 def set_non_mask_constant(img_np, mask_np,
@@ -333,3 +335,55 @@ def uncrop_with_params(img_np, orig_size_x, orig_size_y, array_minx_maxx_miny_ma
     size_changes = [[opencxr.utils.size_change_uncrop_with_params, [orig_size_x, orig_size_y, minx, maxx, miny, maxy]]]
     return img_np, size_changes
 
+"""
+get largest components from a binary segmentation mask
+Post-processing - keep only the e.g. [one/two] largest connected components in a segmentation image
+expects an input image that is 1/0 binary
+"""
+def get_largest_components(np_array, nr_components):
+    # get a label per connected component, background is 0
+    labels = measure.label(np_array, background=0)
+    # count pixels per label
+    unique, counts = np.unique(labels, return_counts=True)
+
+    # helper function
+    def get_key(item):
+        return item[1]
+
+    # get ordered list of labels
+    counts = sorted(zip(unique, counts), key=get_key, reverse=True)
+    # get largest of labels excluding 0, and keeping only the top nr_components items
+    largest_labels = [c[0] for c in counts if c[0] != 0][0:nr_components]
+
+    if len(largest_labels) == nr_components: # if we got the correct number of components out
+        out_array = np.full(np_array.shape, False, dtype=bool)
+        all_labels_np = np.asarray(labels)
+        for l in largest_labels:
+            out_array = out_array | (all_labels_np == l)
+        out_array = out_array.astype(np.uint8)
+        # print('returning correct number of components')
+        return out_array
+    else: # otherwise there were not even enough components to reach nr_components so just return the original
+        # print('returning fewer than expected components')
+        return np_array
+
+def tidy_segmentation_mask(seg_mask, nr_components_to_keep):
+    """
+    A method to fill holes and only keep largest components before returning final mask
+    Args:
+        image:
+
+    Returns:
+        tidied image
+    """
+    # make binary
+    seg_mask = rescale_to_min_max(seg_mask, np.uint8, 0, 1)
+
+    # fill holes
+    seg_mask = ndimage.binary_fill_holes(seg_mask)
+
+    # Only keep 2 largest components
+    seg_mask = get_largest_components(seg_mask, nr_components_to_keep).astype(np.uint8)
+
+    seg_mask = rescale_to_min_max(seg_mask, np.uint8, 0, 255)
+    return seg_mask
