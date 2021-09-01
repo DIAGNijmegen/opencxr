@@ -2,8 +2,9 @@
 """
 Created on Fri July  2 2021
 
-@author: ecem
+@author: keelin
 """
+
 import opencxr
 from opencxr.algorithms.base_algorithm import BaseAlgorithm
 import numpy as np
@@ -12,6 +13,12 @@ import os
 from opencxr.utils.normalization import Normalizer
 from opencxr.utils.mask_crop import crop_to_mask
 
+"""
+CXR Standardization does the following:
+1) Standardize (Normalize) image intensities using Energy Based Normalization
+2) Optionally segment the lungs and crop around the lung box (frontal CXR only)
+3) Resize the image to square size specified preserving aspect ratio and padding the shorter edge
+"""
 class CXRStandardizationAlgorithm(BaseAlgorithm):
 
     def __init__(self):
@@ -23,7 +30,6 @@ class CXRStandardizationAlgorithm(BaseAlgorithm):
 
     def run(self, image_np, spacing, do_crop_to_lung_box=True, final_square_size=1024):
         """
-
         Args:
             image_np: np array, x, y ordering,
             spacing: tuple or list of spacing values
@@ -31,9 +37,9 @@ class CXRStandardizationAlgorithm(BaseAlgorithm):
             final_square_size: The size (pixels) of the final output image (aspect ratio preserved, short side padded)
 
         Returns:
-            standard_image: np array image with standardized intensities, cropped around lungs, resized to 1024x1024 with padding to preserve aspect ratio
+            standard_image: np array image with standardized intensities, cropped around lungs (if required), resized to 1024x1024 with padding to preserve aspect ratio
             new_spacing: the new spacing of the image
-            size_changes: A dict identifying size changes that took place (to enable users to repeat these on related images if needed)
+            size_changes: A dict identifying size changes that took place (to enable users to repeat these on related images if needed, see utils/__init__.py)
         """
 
         # normalize intensities (this will also crop black borders and resize image to width 2048 and aspect preserved height)
