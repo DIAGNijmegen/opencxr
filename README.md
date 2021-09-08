@@ -1,12 +1,13 @@
 ## OpenCXR
 
-OpenCXR is an open source collection of chest x-ray (CXR) algorithms and utilities maintained by the Diagnostic Image Analysis Group at Radboud University Medical Center, Nijmegen, the Netherlands.
+OpenCXR is an open source collection of chest x-ray (CXR) algorithms and utilities maintained by the 
+Diagnostic Image Analysis Group (DIAG) at Radboud University Medical Center, Nijmegen, the Netherlands.
 www.diagnijmegen.nl
 
 ### OpenCXR Algorithms
 
 The algorithms currently offered are as follows:
-* ####Image Sorter: 
+* #### Image Sorter: 
   This algorithm is designed to help users sort out volumes of downloaded CXR data.  
 * Given a 2D image, Image Sorter will identify it as one of the following image types:  
     * Frontal PA chest X-ray
@@ -19,15 +20,15 @@ The algorithms currently offered are as follows:
     * Inversion (identifies if the X-Ray is stored with bright values representing air-filled regions)
     * Lateral Flip (identifies if a lateral Chest X-Ray is stored with the spine to the left of the image)
 
-* ####Lung Segmentation:
+* #### Lung Segmentation:
   Given a PA chest X-ray this algorithm will provide a segmentation of the lung fields as a binary image.  
   This algorithm may work on AP images but is not trained or tested on them.
 
-* ####Heart Segmentation:
+* #### Heart Segmentation:
   Given a PA chest X-ray this algorithm will provide a segmentation of the heart as a binary image
   This algorithm may work on AP images but is not trained or tested on them.
 
-* ####Chest X-ray standardization:
+* #### Chest X-ray standardization:
   Given a frontal chest X-ray this algorithm will 
     * standardize the image intensities using energy bands and a region of interest (obtained by lung segmentation).
   This process is described in the following paper: [Localized Energy-Based Normalization of Medical Images: Application to Chest Radiography, Philipsen et. al., IEEE Transactions on Medical Imaging, 2015](https://ieeexplore.ieee.org/document/7073580)
