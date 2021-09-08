@@ -56,7 +56,7 @@ Install conda.  We use [anaconda](https://docs.anaconda.com/anaconda/install/) b
 ### Installing
  * clone this repository to your computer
  * get the model weights from [here](https://drive.google.com/drive/folders/1jif0ozt3-FZFGw-x9Qx_QRBSiw6dikM_?usp=sharing)   
-   and store them in folder algorithms/model_weights <span style="font-size:0.5em;">(note that the CXR standardization algorithm does not use a trained neural network and so does not have a model weights file)
+   and store them in folder algorithms/model_weights (note that the CXR standardization algorithm does not use a trained neural network and so does not have a model weights file)
  * add the path to the cloned repository to your Python Path
  * use the file opencxr_env.yml (in root folder) to set up a conda environment with the correct packages installed  
    `conda env create --name my_opencxr_env --file opencxr_env.yml`
