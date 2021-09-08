@@ -25,7 +25,7 @@ The algorithms currently offered are as follows:
   This algorithm may work on AP images but is not trained or tested on them.
 
 * #### Heart Segmentation:
-  Given a PA chest X-ray this algorithm will provide a segmentation of the heart as a binary image
+  Given a PA chest X-ray this algorithm will provide a segmentation of the heart as a binary image.
   This algorithm may work on AP images but is not trained or tested on them.
 
 * #### Chest X-ray standardization:
