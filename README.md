@@ -8,8 +8,8 @@ www.diagnijmegen.nl
 
 The algorithms currently offered are as follows:
 * #### Image Sorter: 
-  This algorithm is designed to help users sort out volumes of downloaded CXR data.  
-* Given a 2D image, Image Sorter will identify it as one of the following image types:  
+  This algorithm is designed to help users sort out volumes of downloaded CXR data. 
+  Given a 2D image, Image Sorter will identify it as one of the following image types:  
     * Frontal PA chest X-ray
     * Frontal AP chest X-ray (distinction between PA and AP is not as good as distinction between other types)
     * Lateral chest X-ray
