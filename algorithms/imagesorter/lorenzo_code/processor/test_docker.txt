@@ -1,2 +1,0 @@
-docker build -t img_sorter_docker .
-docker run -v /home/keelin/Radboud/general/OpenCXR/code_testing/opencxr/lorenzo/processor/test_input:/input -v /home/keelin/Radboud/general/OpenCXR/code_testing/opencxr/lorenzo/processor/test_output:/output --runtime=nvidia img_sorter_docker

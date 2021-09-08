@@ -1,74 +1,104 @@
-## OpenCXR 
-OpenCXR is an open source collection of chest x-ray (CXR) algorithms. OpenCXR comes with two packages, OpenCXR-Core and OpenCXR-Utils. 
+## OpenCXR
 
-### OpenCXR-Core
-The core library lets users run algorithms in an easy way.
+OpenCXR is an open source collection of chest x-ray (CXR) algorithms and utilities maintained by the Diagnostic Image Analysis Group at Radboud University Medical Center, Nijmegen, the Netherlands.
+www.diagnijmegen.nl
 
-### OpenCXR-Utils
-The utils library lets users create algorithms in an easy way. It includes python scripts for various operations that are necessary for image manipulation.
+### OpenCXR Algorithms
+
+The algorithms currently offered are as follows:
+* ####Image Sorter: 
+  This algorithm is designed to help users sort out volumes of downloaded CXR data.  
+* Given a 2D image, Image Sorter will identify it as one of the following image types:  
+    * Frontal PA chest X-ray
+    * Frontal AP chest X-ray (distinction between PA and AP is not as good as distinction between other types)
+    * Lateral chest X-ray
+    * Other (not a chest X-ray)
+  
+  Image Sorter will additionally provide the following useful information for Chest X-Ray images:
+    * Rotation (identifies if the image is rotated 90, 180 or 270 degrees)
+    * Inversion (identifies if the X-Ray is stored with bright values representing air-filled regions)
+    * Lateral Flip (identifies if a lateral Chest X-Ray is stored with the spine to the left of the image)
+
+* ####Lung Segmentation:
+  Given a PA chest X-ray this algorithm will provide a segmentation of the lung fields as a binary image.  
+  This algorithm may work on AP images but is not trained or tested on them.
+
+* ####Heart Segmentation:
+  Given a PA chest X-ray this algorithm will provide a segmentation of the heart as a binary image
+  This algorithm may work on AP images but is not trained or tested on them.
+
+* ####Chest X-ray standardization:
+  Given a frontal chest X-ray this algorithm will 
+    * standardize the image intensities using energy bands and a region of interest (obtained by lung segmentation).
+  This process is described in the following paper: [Localized Energy-Based Normalization of Medical Images: Application to Chest Radiography, Philipsen et. al., IEEE Transactions on Medical Imaging, 2015](https://ieeexplore.ieee.org/document/7073580)
+    * (Optionally) crop the image to the lung bounding box
+    * Resize the image to a specified square size (e.g. 1024x1024), preserving aspect ratio and padding the shorter axis. 
+
+
+### OpenCXR Utilities
+The utils library contains functions for common or useful functions when working with chest X-rays.  These include:
+ * reading/writing images
+ * resizing images
+ * rescaling intensities
+ * masking/cropping
+ * rotating/flipping  
+
+In general if you work with OpenCXR algorithms it is recommended to use the OpenCXR image reader/writer and other 
+utilities.
+
 
 ## How to use OpenCXR
+
 ### Requirements
-To be able to use OpenCXR, [install docker](https://runnable.com/docker/getting-started/).
+Install conda.  We use [anaconda](https://docs.anaconda.com/anaconda/install/) but miniconda should work too
 
-Install OpenCXR using pip `pip install opencxr`.
+### Installing
+ * clone this repository to your computer
+ * get the model weights from XXXXXXXXXXXXXXXXXXX and store them at XXXXXXXXXXXXXXXXXX <span style="font-size:0.9em;">(note that the CXR standardization algorithm does not use a trained neural network and so does not have a model weights file)
+ * add the path to the cloned repository to your Python Path
+ * use the file opencxr_env.yml (in root folder) to set up a conda environment with the correct packages installed  
+   `conda env create --name my_opencxr_env --file opencxr_env.yml`
+ * activate the conda environment before running any further commands  
+   `conda activate my_opencxr_env`
 
-To access an OpenCXR algorithm in python, use 
+### Running an algorithm
+The easiest way to see how to run the algorithm you are interested in is to look for the algorithm test code in the *tests* folder.
+i.e.  
+ * tests/test_cxrstandardization.py
+ * tests/test_heartsegmentation.py
+ * tests/test_imagesorter.py
+ * tests/test_lungsegmentation.py
 
-### Usage
-OpenCXR is licensed with the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/) and make sure your purposes are not conflicting with it. 
-@TODO is the license correct?
-@TODO create a LICENSE file in the repository.
+Each of these files contains a minimal code snippet to run the algorithm in question on a sample image.  The principle in each
+case is the same: Load the algorithm, read an image, run the algorithm.  The expected returned objects are different depending what algorithm you run.
 
-To use OpenCXR, simply import it in python, load the necessary algorithm (see [algorithms](algorithms.md))
 
+Note that the heart and lung segmentation algorithms are designed to work on raw PA CXR images, 
+however if performance is poor it is likely to be improved by applying CXR standardization to your images first.  
+
+A sample code snippet for lung segmentation is provided below:
 ```python
 import opencxr
-import numpy as np
+from opencxr.utils.file_io import read_file, write_file
 
 # Load the algorithm
-lung_segmentation_algorithm = opencxr.load(opencxr.algorithms.lung_segmentation)
-
-# Run the algorithm on a single file
-lung_segmentation_algorithm.run('/path/to/input_folder/image.mha', '/path/to/output_folder/')
-
-
-# Use the algorithm on a set of images 
-lung_segmentation_algorithm.run('/path/to/input_folder/', '/path/to/output_folder/')
+lungseg_algorithm = opencxr.load(opencxr.algorithms.lung_seg)
+# read an image from disk
+img_np, spacing, dicom_tags = read_file('input_path/input_file.mha') # supports mha, mhd, png, dcm
+# run the lung segmentation algorithm on the image
+seg_map = lungseg_algorithm.run(img_np)
+# write the output segmentation to disk
+write_file('output_path/output_file.mha', seg_map, spacing)
 ```
 
-See the corresponding algorithm documentation for supported functionality.
+### License ???
+
+OpenCXR is licensed with
+the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/) @TODO is the license correct? @TODO create a LICENSE file in the repository.
 
 
-## Contributing
-You can contribute to OpenCXR in 4 ways.
-
-### 1. Contributing an Algorithm to OpenCXR
-
-#### Requirements
-In grand-challenge.org, OpenCXR hosts some challenges. To see the list of hosted challenges, go to the [grand-challenge challenges page](https://grand-challenge.org/challenges/) and choose OpenCXR from the host list. Contribution to the OpenCXR is open for the contributors of these challenges. There are a few requirements to be able to contribute your algorithm to OpenCXR.
-1. @TODO Details about the license
-1. The algorithm code has to be published in github.com
-1. @TODO Decisions about reproducability, do we require being able to retrain the models(UOKs)? 
-
-#### How to contribute
-
-1. Publish the results of your algorithm under the relevant challenge.
-1. If you haven't already, create a public repository in github.com and push your code in it. For more information, see [Getting Started with Git Basics](https://git-scm.com/book/en/v1/Getting-Started-Git-Basics).
-1. Create a Dockerfile that executes your algorithm and produces the prediction file.
-1. Create a branch in your github repository. This branch should only contain the Dockerfile and the necessary files to run this script (such as weights). Please try to minimize the amount of code in this branch by removing unnecessary files, and code blocks. 
-1. Create a pull request to OpenCXR, mention the algorithm
-
-### 2. Contributing a Challenge to OpenCXR
-If you think that OpenCXR should include a clinically relevant algorithm or an algorithm that would ease the  You can contribute a challenge to OpenCXR. 
-1. As explained in grand-challenge.org, [create your own challenge](https://grand-challenge.org/Support/).
-1. Add OpenCXR as an admin. @TODO We should Ask James about how these two steps should be.
-1. Create an issue under the OpenCXR github repository. We will review your request and discuss the situation further.
+### Questions ???
+Do we want to give an email, or just let people create issues?
 
 
-### 3. Contributing Data to OpenCXR
-Please get in touch with opencxr@gmail.com for contributing data to OpenCXR. The process generally involves parties signing a Data Transfer Agreement (DTO). 
 
-
-### 4. Contributing to the OpenCXR-utils or OpenCXR-core
-See the [utils contribution guide](utils/CONTRIBUTING.md) and [core contribution guide](core/CONTRIBUTING.md).

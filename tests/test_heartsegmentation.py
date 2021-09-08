@@ -4,22 +4,21 @@
 @author: ecem
 """
 
-import opencxr
 from pathlib import Path
+
+import opencxr
 from opencxr.utils.file_io import read_file, write_file
 
-# Load the algorithm
-# possible algorithms are listed in opencxr/algorithms/__init__.py
+# Load the heart segmentation algorithm
 heartseg_algorithm = opencxr.load(opencxr.algorithms.heart_seg)
-# test with numpy array as input
-f_in = Path(__file__).parent / "resources" / "images" / "g0536.mha"
+# read in a test image
+f_in = Path(__file__).parent / 'resources' / 'images' / 'c0003.mha'
 f_in = str(f_in.resolve())
-img,spacing,pydata = read_file(f_in)
-print('img i input to heart seg has shape of ', img.shape)
-seg_map = heartseg_algorithm.run(img)
-print('seg map i received has shape of', seg_map.shape)
-f_out = Path(__file__).parent / "resources" / "tmp_test_outputs" / "g0536.mha"
+img_np, spacing, pydata = read_file(f_in)
+# run the heart segmentation algorithm
+# this will return the segmentation map image
+seg_map = heartseg_algorithm.run(img_np)
+# write the output from the segmentation algorithm to disk
+f_out = Path(__file__).parent / "resources" / "tmp_test_outputs" / "c0003_heartseg.mha"
 f_out = str(f_out.resolve())
-print(seg_map.dtype)
 write_file(f_out, seg_map, spacing)
-

@@ -4,43 +4,34 @@
 @author: keelin
 """
 
-import opencxr
 from pathlib import Path
-from opencxr.utils.file_io import read_file, write_file
-from opencxr.utils.mask_crop import crop_img_borders
+import opencxr
 from opencxr.utils import apply_size_changes_to_img
-from PIL import Image
-import os
-import numpy as np
-
+from opencxr.utils.file_io import read_file, write_file
 
 # read in and standardize an image
-f_in = Path(__file__).parent / "resources" / "images" / "g0019.mha"
+# first get the file path relative to current location
+f_in = Path(__file__).parent / "resources" / "images" / "c0002.mha"
 f_in = str(f_in.resolve())
-img_np,spacing,pydata = read_file(f_in)
+# read in the image
+img_np, spacing, pydata = read_file(f_in)
+# load the standardization algorithm
 cxrstandardize_algorithm = opencxr.load(opencxr.algorithms.cxr_standardize)
-cxrstandardize_algorithm
+
+# run the standardization algorithm on the test image
+# this will return the new image, the new spacing, and a dict of size changes carried out
+# these size changes can be easily applied to other images, see further code below
 final_norm_img, new_spacing, size_changes = cxrstandardize_algorithm.run(img_np, spacing)
-print('size changes was', size_changes)
-f_out = Path(__file__).parent / "resources" / "tmp_test_outputs" / "g0019_norm.mha"
+
+# set up an output location and write the output image there
+f_out = Path(__file__).parent / "resources" / "tmp_test_outputs" / "c0002_norm.mha"
 f_out = str(f_out.resolve())
 write_file(f_out, final_norm_img, new_spacing)
 
-# now make a lung segmentation for the original image and try to resize it using the size_changes information
-lungseg_algorithm = opencxr.load(opencxr.algorithms.lung_seg)
-seg_map_fullsize = lungseg_algorithm.run(img_np)
-seg_map_resized_for_norm, new_lung_seg_spacing = apply_size_changes_to_img(seg_map_fullsize, spacing, size_changes, anti_aliasing=False, interp_order=0)
+# Next we test whether the size_changes information that was provided is correct
+# run apply_size_changes_to_img and verify that the output sizes are the same as the ones that came from standardization algorithm
+img_resized_to_test, new_spacing_to_test = apply_size_changes_to_img(img_np, spacing, size_changes)
 
-f_out = Path(__file__).parent / "resources" / "tmp_test_outputs" / "g0019_lungseg.mha"
-f_out = str(f_out.resolve())
-write_file(f_out, seg_map_fullsize, spacing)
-f_out = Path(__file__).parent / "resources" / "tmp_test_outputs" / "g0019_norm_lungseg.mha"
-f_out = str(f_out.resolve())
-write_file(f_out, seg_map_resized_for_norm, new_lung_seg_spacing)
-
-#just for interest also lung seg the final norm image to see how it looks by comparison to the resized original
-seg_map_normsize = lungseg_algorithm.run(final_norm_img)
-f_out = Path(__file__).parent / "resources" / "tmp_test_outputs" / "g0019_norm_lungsegonnorm.mha"
-f_out = str(f_out.resolve())
-write_file(f_out, seg_map_normsize, new_lung_seg_spacing)
-
+resized_img_worked = (final_norm_img.shape == img_resized_to_test.shape)
+resized_spacing_worked = (new_spacing == new_spacing_to_test)
+print('Check that resizing image and spacing worked:', resized_img_worked, resized_spacing_worked)
