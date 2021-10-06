@@ -69,4 +69,8 @@ class ImageSorterAlgorithm(BaseAlgorithm):
         return {"Type": type_labels[im_type],
                 "Rotation": rotation_labels[im_rot],
                 "Inversion": inversion_labels[im_inv],
-                "Lateral Flip": lateral_flip_labels[im_flip]}
+                "Lateral_Flip": lateral_flip_labels[im_flip],
+                "Type_Probs_PA_AP_lateral_not-CXR": pred[0],
+                "Rotation_Probs_0_90_180_270": pred[1],
+                "Inversion_Probs_No_Yes": [1-pred[2], pred[2]],
+                "Lateral_Flip_No_Yes": [1-pred[3], pred[3]]}
