@@ -42,8 +42,23 @@ class ImageSorterAlgorithm(BaseAlgorithm):
         """
         Run the image sorter algorithm
         :param image: The input image in x,y axis order (as from utils file_io read_image())
-        :return: A dict with keys "Type", "Rotation", "Inversion", "Lateral Flip". Possible values for those keys
-        are (respectively): ['PA', 'AP', 'lateral', 'not-CXR'], ['0', '90', '180', '270'], ['No', 'Yes'], ['No', 'Yes']
+        :return: # a dict something like:
+        {'Type': 'PA',
+           'Rotation': '0',
+           'Inversion': 'No',
+           'Lateral_Flip': 'No',
+           'Type_Probs_PA_AP_lateral_notCXR': [0.99999976, 2.5101654e-08, 2.4382584e-07, 1.0590604e-08],
+           'Rotation_Probs_0_90_180_270': [0.9999999, 2.7740466e-08, 2.2800064e-08, 3.7591672e-08],
+           'Inversion_Probs_No_Yes': [0.9999968589511354, 3.1410489e-06],
+           'Lateral_Flip_Probs_No_Yes': [0.9999986753330177, 1.324667e-06]}
+        The first four keys give classifications for Type, Rotation, Inversion, Lateral_Flip.
+        The second four keys provide probabilities of all possible classes for users that might need this
+
+        Possible values for the first four keys are as follows:
+        Type:  ['PA', 'AP', 'lateral', 'notCXR']
+        Rotation: ['0', '90', '180', '270']
+        Inversion: ['No', 'Yes']
+        Lateral_Flip: ['No', 'Yes']
         """
         # first preprocessing:
         image = preprocess_img(image)
@@ -60,7 +75,7 @@ class ImageSorterAlgorithm(BaseAlgorithm):
         im_flip = 1 if pred[3] > 0.5 else 0
 
         # set up return labels
-        type_labels = ['PA', 'AP', 'lateral', 'not-CXR']
+        type_labels = ['PA', 'AP', 'lateral', 'notCXR']
         rotation_labels = ['0', '90', '180', '270']
         inversion_labels = ['No', 'Yes']
         lateral_flip_labels = ['No', 'Yes']
@@ -70,7 +85,7 @@ class ImageSorterAlgorithm(BaseAlgorithm):
                 "Rotation": rotation_labels[im_rot],
                 "Inversion": inversion_labels[im_inv],
                 "Lateral_Flip": lateral_flip_labels[im_flip],
-                "Type_Probs_PA_AP_lateral_not-CXR": pred[0],
-                "Rotation_Probs_0_90_180_270": pred[1],
-                "Inversion_Probs_No_Yes": [1-pred[2], pred[2]],
-                "Lateral_Flip_No_Yes": [1-pred[3], pred[3]]}
+                "Type_Probs_PA_AP_lateral_notCXR": list(pred[0][0]),
+                "Rotation_Probs_0_90_180_270": list(pred[1][0]),
+                "Inversion_Probs_No_Yes": [1-pred[2][0][0], pred[2][0][0]],
+                "Lateral_Flip_Probs_No_Yes": [1-pred[3][0][0], pred[3][0][0]]}

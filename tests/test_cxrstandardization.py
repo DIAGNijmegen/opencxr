@@ -8,6 +8,7 @@ from pathlib import Path
 import opencxr
 from opencxr.utils import apply_size_changes_to_img
 from opencxr.utils.file_io import read_file, write_file
+import numpy as np
 
 # read in and standardize an image
 # first get the file path relative to current location
@@ -34,4 +35,9 @@ img_resized_to_test, new_spacing_to_test = apply_size_changes_to_img(img_np, spa
 
 resized_img_worked = (final_norm_img.shape == img_resized_to_test.shape)
 resized_spacing_worked = (new_spacing == new_spacing_to_test)
-print('Check that resizing image and spacing worked:', resized_img_worked, resized_spacing_worked)
+
+if final_norm_img.shape == (1024, 1024) and not np.max(final_norm_img) == 0 and (final_norm_img.shape == img_resized_to_test.shape) and (new_spacing == new_spacing_to_test):
+    print('CXR standardization test completed successfully')
+else:
+    print('CXR standardization results not as expected')
+
