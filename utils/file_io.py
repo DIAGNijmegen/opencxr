@@ -128,7 +128,7 @@ def read_dicom(in_img_location):
 
     # Need this for headers, but pydicom cannot read pixel data if it is
     # stored in jpeg2000 compression
-    pydicom_version = pydicom.dcmread(in_img_location)
+    pydicom_version = pydicom.dcmread(in_img_location)  #try this??? ds = pydicom.filereader.read_partial(f, stop_when=pixel_data_reached)
 
     # Make a correction because sitk seems to read pixel spacing only from the ImagerPixelSpacing dicom tag
     # In some images that tag is absent but the tag PixelSpacing is available
