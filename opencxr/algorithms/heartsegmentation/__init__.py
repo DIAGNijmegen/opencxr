@@ -37,7 +37,7 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
         # if the file does not exist (it's not included in whl file) then download it from github
         if not os.path.isfile(path_to_model_resolved):
             print('First use of heart segmentation model, downloading the weights......')
-            file_url = 'https://github.com/keelinm/node21-noduledetection-kmtest/raw/main/tmp_test/heart_seg.h5'
+            file_url = 'https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/heart_seg.h5'
             os.makedirs(os.path.dirname(path_to_model_resolved), exist_ok=True)
             wget.download(file_url, path_to_model_resolved)
             if not os.path.isfile(path_to_model_resolved):
