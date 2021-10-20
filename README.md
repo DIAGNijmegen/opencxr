@@ -20,7 +20,7 @@ The algorithms currently offered are as follows:
     * Inversion (identifies if the X-Ray is stored with bright values representing air-filled regions)
     * Lateral Flip (identifies if a lateral Chest X-Ray is stored with the spine to the left of the image)
 
-Image Sorter is designed to work on raw data and it is not recommended to perform image normalization/standardization procedures in advance.
+  Image Sorter is designed to work on raw data and it is not recommended to perform image normalization/standardization procedures in advance.
 
 * #### Lung Segmentation:
   Given a PA chest X-ray this algorithm will provide a segmentation of the lung fields as a binary image.  
