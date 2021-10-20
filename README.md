@@ -50,8 +50,13 @@ utilities.
 
 ## How to use OpenCXR
 
+COMING SOON !!!! This repository will be functional by 1st November 2021
+
+<!---
 ### Requirements
-Install conda.  We use [anaconda](https://docs.anaconda.com/anaconda/install/) but miniconda should work too
+git lfs
+pip
+
 
 ### Installing
  * clone this repository to your computer
@@ -101,6 +106,6 @@ the [Creative Commons Attribution 4.0 International License](https://creativecom
 
 ### Questions ???
 Do we want to give an email, or just let people create issues?
-
+-->
 
 
