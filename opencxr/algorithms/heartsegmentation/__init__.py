@@ -4,7 +4,7 @@ Created on Fri July  2 2021
 
 @author: ecem
 """
-
+import os.path
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +13,7 @@ from opencxr.algorithms.heartsegmentation.model import unet
 from opencxr.utils import reverse_size_changes_to_img
 from opencxr.utils.mask_crop import tidy_segmentation_mask
 from opencxr.utils.resize_rescale import rescale_to_min_max, resize_long_edge_and_pad_to_square
+import wget
 
 """
 Segments the heart in frontal CXR images
@@ -32,6 +33,18 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
 
         path_to_model_file = Path(__file__).parent.parent / "model_weights" / "heart_seg.h5"
         path_to_model_resolved = str(path_to_model_file.resolve())
+
+        # if the file does not exist (it's not included in whl file) then download it from github
+        if not os.path.isfile(path_to_model_resolved):
+            print('First use of heart segmentation model, downloading the weights......')
+            file_url = 'https://github.com/keelinm/node21-noduledetection-kmtest/raw/main/tmp_test/heart_seg.h5'
+            os.makedirs(os.path.dirname(path_to_model_resolved), exist_ok=True)
+            wget.download(file_url, path_to_model_resolved)
+            if not os.path.isfile(path_to_model_resolved):
+                print('Failed to download file from', file_url)
+                print('Please check the URL is valid and the following location is writeable', path_to_model_resolved)
+                return
+
         self.model.load_weights(path_to_model_resolved)
 
     def preprocess(self, image):

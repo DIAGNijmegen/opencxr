@@ -14,6 +14,8 @@ from opencxr.utils import reverse_size_changes_to_img
 from opencxr.utils.mask_crop import tidy_segmentation_mask
 from opencxr.utils.resize_rescale import rescale_to_min_max
 from opencxr.utils.resize_rescale import resize_long_edge_and_pad_to_square
+import wget
+import os
 
 """
 Segments the lungs in frontal CXR images
@@ -32,6 +34,18 @@ class LungSegmentationAlgorithm(BaseAlgorithm):
 
         path_to_model_file = Path(__file__).parent.parent / "model_weights" / "lung_seg.h5"
         path_to_model_resolved = str(path_to_model_file.resolve())
+
+        # if the file does not exist (it's not included in whl file) then download it from github
+        if not os.path.isfile(path_to_model_resolved):
+            print('First use of lung segmentation model, downloading the weights......')
+            file_url = 'https://github.com/keelinm/node21-noduledetection-kmtest/raw/main/tmp_test/lung_seg.h5'
+            os.makedirs(os.path.dirname(path_to_model_resolved), exist_ok=True)
+            wget.download(file_url, path_to_model_resolved)
+            if not os.path.isfile(path_to_model_resolved):
+                print('Failed to download file from', file_url)
+                print('Please check the URL is valid and the following location is writeable', path_to_model_resolved)
+                return
+
         self.model.load_weights(path_to_model_resolved)
 
     def preprocess(self, image):
