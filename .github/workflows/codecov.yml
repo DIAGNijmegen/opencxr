@@ -2,6 +2,9 @@ name: Code coverage workflow
 on: [create]
 jobs:
   run:
+    defaults:
+      run:
+        working-directory: ./
     runs-on: ubuntu-latest
     strategy:
       matrix:
