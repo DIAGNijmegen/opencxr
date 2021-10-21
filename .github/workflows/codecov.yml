@@ -14,11 +14,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .
+        pip install git-lfs
     - name: checkout
       uses: actions/checkout@v2
     - name: Generate coverage report
       run: |
+        pip install -e .
         pip install pytest
         pip install pytest-cov
         pytest -s --cov=./ --cov-report=xml
