@@ -25,10 +25,12 @@ def invert_grayscale(np_array_in, preserve_dtype=True):
     inverted_np = util.invert(np_array_in)
     if preserve_dtype:
         # cast back to original type, first rescaling to min/max for that type
-        inverted_np = rescale_to_min_max(inverted_np,
-                                         np_array_in.dtype,
-                                         new_min=None,
-                                         new_max=None, )
+        inverted_np = rescale_to_min_max(
+            inverted_np,
+            np_array_in.dtype,
+            new_min=None,
+            new_max=None,
+        )
     return inverted_np
 
 
@@ -47,10 +49,9 @@ def rotate_img(np_array_in, rot_angle, preserve_dtype=True):
     rot_img = rotate(np_array_in, rot_angle)
     if preserve_dtype:
         # cast back to original type, first rescaling to min/max for that type
-        rot_img = rescale_to_min_max(rot_img,
-                                     np_array_in.dtype,
-                                     new_min=None,
-                                     new_max=None)
+        rot_img = rescale_to_min_max(
+            rot_img, np_array_in.dtype, new_min=None, new_max=None
+        )
     return rot_img
 
 
@@ -67,10 +68,7 @@ def flip_x(np_array_in, preserve_dtype=True):
     flipx = flipud(np_array_in)
     if preserve_dtype:
         # cast back to original type, first rescaling to min/max for that type
-        flipx = rescale_to_min_max(flipx,
-                                   np_array_in.dtype,
-                                   new_min=None,
-                                   new_max=None)
+        flipx = rescale_to_min_max(flipx, np_array_in.dtype, new_min=None, new_max=None)
     return flipx
 
 
@@ -87,8 +85,5 @@ def flip_y(np_array_in, preserve_dtype=True):
     flipy = fliplr(np_array_in)
     if preserve_dtype:
         # cast back to original type, first rescaling to min/max for that type
-        flipy = rescale_to_min_max(flipy,
-                                   np_array_in.dtype,
-                                   new_min=None,
-                                   new_max=None)
+        flipy = rescale_to_min_max(flipy, np_array_in.dtype, new_min=None, new_max=None)
     return flipy

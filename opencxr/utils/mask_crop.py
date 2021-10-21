@@ -16,8 +16,8 @@ from skimage import measure
 Methods relating to mask and crop functionality
 """
 
-def set_non_mask_constant(img_np, mask_np,
-                          dilation_in_pixels=0, constant_val=0):
+
+def set_non_mask_constant(img_np, mask_np, dilation_in_pixels=0, constant_val=0):
     """
     A method to set a portion of an image to a constant value
     e.g. set areas outside lungs to be black
@@ -30,11 +30,10 @@ def set_non_mask_constant(img_np, mask_np,
     """
 
     if dilation_in_pixels > 0:
-        struct_element = np.ones((dilation_in_pixels,
-                                  dilation_in_pixels)).astype(bool)
-        mask_np = binary_dilation(mask_np,
-                                  structure=struct_element
-                                  ).astype(mask_np.dtype)
+        struct_element = np.ones((dilation_in_pixels, dilation_in_pixels)).astype(bool)
+        mask_np = binary_dilation(mask_np, structure=struct_element).astype(
+            mask_np.dtype
+        )
 
     np.putmask(img_np, mask_np < 1, constant_val)
     return img_np
@@ -63,13 +62,15 @@ def crop_to_mask(img_np, spacing, mask_np, margin_in_mm):
     max_x_mask = min(bbox[0][0].stop + margin_in_pixels_x, mask_np.shape[0])
     max_y_mask = min(bbox[0][1].stop + margin_in_pixels_y, mask_np.shape[1])
 
-    cropped_img, size_changes = crop_with_params(img_np, [min_x_mask, max_x_mask, min_y_mask, max_y_mask])
+    cropped_img, size_changes = crop_with_params(
+        img_np, [min_x_mask, max_x_mask, min_y_mask, max_y_mask]
+    )
     return cropped_img, size_changes
 
 
-def crop_img_borders_by_edginess(img_np_array,
-                                 width_edgy_threshold=50,
-                                 dist_edgy_threshold=100):
+def crop_img_borders_by_edginess(
+    img_np_array, width_edgy_threshold=50, dist_edgy_threshold=100
+):
     """
     Method to crop homogeneous border regions based on edge detection:
     1) do an edge detection to pick up edges belonging to the image content
@@ -84,7 +85,6 @@ def crop_img_borders_by_edginess(img_np_array,
              The size changes list for reference or future use see utils __init__.py
     """
 
-
     def find_starts_ends_edgy_regions_axis(edge_img_np_array, axis_to_check):
         """
         inner function to count edge pixels and identify (per row, per axis)
@@ -93,9 +93,11 @@ def crop_img_borders_by_edginess(img_np_array,
         count_edges = []
         start_end_edgy_regions = []
         for ind in range(0, edge_img_np_array.shape[axis_to_check]):
-            count_edge_pixels = np.sum(edge_img_np_array[ind, :]
-                                       if axis_to_check == 0
-                                       else edge_img_np_array[:, ind])
+            count_edge_pixels = np.sum(
+                edge_img_np_array[ind, :]
+                if axis_to_check == 0
+                else edge_img_np_array[:, ind]
+            )
             count_edges.append(count_edge_pixels)
             if ind == 0:
                 # start an edgy region if there are immediately edges present
@@ -133,9 +135,9 @@ def crop_img_borders_by_edginess(img_np_array,
         for start_edgy_index in range(0, len(starts_ends_edgy_regions), 2):
             start_edgy = starts_ends_edgy_regions[start_edgy_index]
             end_edgy = starts_ends_edgy_regions[start_edgy_index + 1]
-            print('found start and end', start_edgy, end_edgy)
+            print("found start and end", start_edgy, end_edgy)
             width_edgy = end_edgy - start_edgy + 1
-            print('found width ', width_edgy)
+            print("found width ", width_edgy)
 
             dist_next_edgy = 10000
             dist_prev_edgy = 10000
@@ -148,8 +150,8 @@ def crop_img_borders_by_edginess(img_np_array,
                 end_prev_edgy = starts_ends_edgy_regions[start_edgy_index - 1]
                 dist_prev_edgy = start_edgy - end_prev_edgy
 
-            isolated_left = (dist_prev_edgy > dist_edgy_threshold)
-            isolated_right = (dist_next_edgy > dist_edgy_threshold)
+            isolated_left = dist_prev_edgy > dist_edgy_threshold
+            isolated_right = dist_next_edgy > dist_edgy_threshold
 
             is_small_edgy_region = width_edgy < width_edgy_threshold
             is_isolated_edgy_region = isolated_left and isolated_right
@@ -165,10 +167,12 @@ def crop_img_borders_by_edginess(img_np_array,
     # so need to force this before we run Canny
     img_for_edge_det = rescale_to_min_max(img_np_array, new_dtype=np.uint16)
 
-    edge_img = skimage.feature.canny(image=img_for_edge_det.astype(np.float32),
-                                     sigma=5.0,
-                                     low_threshold=0.0,
-                                     high_threshold=500.0)
+    edge_img = skimage.feature.canny(
+        image=img_for_edge_det.astype(np.float32),
+        sigma=5.0,
+        low_threshold=0.0,
+        high_threshold=500.0,
+    )
     # convert from boolean
     edge_img = edge_img.astype(np.uint8)
 
@@ -187,7 +191,9 @@ def crop_img_borders_by_edginess(img_np_array,
     # print('Will finally crop from edginess x', start_x, end_x)
     # print('Will finally crop from edginess y', start_y, end_y)
 
-    cropped_img, size_changes = crop_with_params(img_np_array, [start_x, end_x, start_y, end_y])
+    cropped_img, size_changes = crop_with_params(
+        img_np_array, [start_x, end_x, start_y, end_y]
+    )
     return cropped_img, size_changes
 
 
@@ -225,7 +231,7 @@ def crop_img_borders(img_np_array, in_thresh_factor=0.05):
         # Determine xmin
         # the first x value where the column of pixels is not "homogeneous"
         for x_pix in range(xmin_stored, xmax_stored + 1):
-            line = img_np_array[x_pix, ymin_stored:ymax_stored + 1]
+            line = img_np_array[x_pix, ymin_stored : ymax_stored + 1]
             std = np.std(line)
             if std < hard_threshold:
                 xmin = x_pix
@@ -235,7 +241,7 @@ def crop_img_borders(img_np_array, in_thresh_factor=0.05):
         # Determine xmax
         # the last x value where the column of pixels is not "homogeneous"
         for x_pix in range(xmax_stored, -1, -1):
-            line = img_np_array[x_pix, ymin_stored:ymax_stored + 1]
+            line = img_np_array[x_pix, ymin_stored : ymax_stored + 1]
             std = np.std(line)
             if std < hard_threshold:
                 xmax = x_pix
@@ -245,7 +251,7 @@ def crop_img_borders(img_np_array, in_thresh_factor=0.05):
         # Determine ymin
         # the first y value where the row of pixels is not "homogeneous"
         for y_pix in range(ymin_stored, ymax_stored + 1):
-            line = img_np_array[xmin_stored:xmax_stored + 1, y_pix]
+            line = img_np_array[xmin_stored : xmax_stored + 1, y_pix]
             std = np.std(line)
             if std < hard_threshold:
                 ymin = y_pix
@@ -255,7 +261,7 @@ def crop_img_borders(img_np_array, in_thresh_factor=0.05):
         # Determine ymax
         # the last x value where the row of pixels is not "homogeneous"
         for y_pix in range(ymax_stored, -1, -1):
-            line = img_np_array[xmin_stored:xmax_stored + 1, y_pix]
+            line = img_np_array[xmin_stored : xmax_stored + 1, y_pix]
             std = np.std(line)
             if std < hard_threshold:
                 ymax = y_pix
@@ -284,7 +290,9 @@ def crop_img_borders(img_np_array, in_thresh_factor=0.05):
             ymax_stored = ymax
             completed = False
 
-    cropped_img, size_changes = crop_with_params(img_np_array, [xmin_stored, xmax_stored + 1, ymin_stored, ymax_stored])
+    cropped_img, size_changes = crop_with_params(
+        img_np_array, [xmin_stored, xmax_stored + 1, ymin_stored, ymax_stored]
+    )
     return cropped_img, size_changes
 
 
@@ -302,14 +310,20 @@ def crop_with_params(img_np, array_minx_maxx_miny_maxy):
     miny = array_minx_maxx_miny_maxy[2]
     maxy = array_minx_maxx_miny_maxy[3]
     size_changes = [
-        [opencxr.utils.size_change_crop_with_params, [img_np.shape[0], img_np.shape[1], minx, maxx, miny, maxy]]]
+        [
+            opencxr.utils.size_change_crop_with_params,
+            [img_np.shape[0], img_np.shape[1], minx, maxx, miny, maxy],
+        ]
+    ]
     # print('in crop_with_params, orig size', img_np.shape)
     cropped_img = img_np[minx:maxx, miny:maxy]
     # print('in crop_with_params, cropped size is ', cropped_img.shape)
     return cropped_img, size_changes
 
 
-def uncrop_with_params(img_np, orig_size_x, orig_size_y, array_minx_maxx_miny_maxy, pad_value=0):
+def uncrop_with_params(
+    img_np, orig_size_x, orig_size_y, array_minx_maxx_miny_maxy, pad_value=0
+):
     """
     Undo a previously applied cropping operation
     :param img_np: the input image
@@ -332,14 +346,24 @@ def uncrop_with_params(img_np, orig_size_x, orig_size_y, array_minx_maxx_miny_ma
     pad_right = orig_size_x - maxx
 
     # pad top and bottom
-    img_np = np.pad(img_np, ((pad_left, pad_right), (pad_top, pad_bottom)), 'constant', constant_values=pad_value)
+    img_np = np.pad(
+        img_np,
+        ((pad_left, pad_right), (pad_top, pad_bottom)),
+        "constant",
+        constant_values=pad_value,
+    )
 
     # if not img_np.shape[0] == orig_size_x:
     #    print('x mismatch', img_np.shape[0], orig_size_x)
-    #if not img_np.shape[1] == orig_size_y:
+    # if not img_np.shape[1] == orig_size_y:
     #    print('y mismatch', img_np.shape[1], orig_size_y)
 
-    size_changes = [[opencxr.utils.size_change_uncrop_with_params, [orig_size_x, orig_size_y, minx, maxx, miny, maxy]]]
+    size_changes = [
+        [
+            opencxr.utils.size_change_uncrop_with_params,
+            [orig_size_x, orig_size_y, minx, maxx, miny, maxy],
+        ]
+    ]
     return img_np, size_changes
 
 
@@ -364,7 +388,9 @@ def get_largest_components(np_array, nr_components):
     # get largest of labels excluding 0, and keeping only the top nr_components items
     largest_labels = [c[0] for c in counts if c[0] != 0][0:nr_components]
 
-    if len(largest_labels) == nr_components:  # if we got the correct number of components out
+    if (
+        len(largest_labels) == nr_components
+    ):  # if we got the correct number of components out
         out_array = np.full(np_array.shape, False, dtype=bool)
         all_labels_np = np.asarray(labels)
         for l in largest_labels:

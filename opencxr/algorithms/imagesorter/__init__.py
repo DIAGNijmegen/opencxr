@@ -28,26 +28,30 @@ In addition, the following information is provided for each image
 
 
 class ImageSorterAlgorithm(BaseAlgorithm):
-
     def name(self):
-        return 'ImageSorterAlgorithm'
+        return "ImageSorterAlgorithm"
 
     def __init__(self):
         """
         load the model
         """
-        path_to_model_file = Path(__file__).parent.parent / "model_weights" / "image_sorter.hdf5"
+        path_to_model_file = (
+            Path(__file__).parent.parent / "model_weights" / "image_sorter.hdf5"
+        )
         path_to_model_resolved = str(path_to_model_file.resolve())
 
         # if the file does not exist (it's not included in whl file) then download it from github
         if not os.path.isfile(path_to_model_resolved):
-            print('First use of imagesorter model, downloading the weights......')
-            file_url = 'https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/image_sorter.hdf5'
+            print("First use of imagesorter model, downloading the weights......")
+            file_url = "https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/image_sorter.hdf5"
             os.makedirs(os.path.dirname(path_to_model_resolved), exist_ok=True)
             wget.download(file_url, path_to_model_resolved)
             if not os.path.isfile(path_to_model_resolved):
-                print('Failed to download file from', file_url)
-                print('Please check the URL is valid and the following location is writeable', path_to_model_resolved)
+                print("Failed to download file from", file_url)
+                print(
+                    "Please check the URL is valid and the following location is writeable",
+                    path_to_model_resolved,
+                )
                 return
 
         self.model = load_model(path_to_model_resolved)
@@ -78,7 +82,7 @@ class ImageSorterAlgorithm(BaseAlgorithm):
         image = preprocess_img(image)
 
         # now get ready and call the model to do prediction
-        image = image / 255.
+        image = image / 255.0
         image = np.stack((image, image, image), axis=2)
         pred = self.model.predict(np.expand_dims(image, 0))
 
@@ -89,17 +93,19 @@ class ImageSorterAlgorithm(BaseAlgorithm):
         im_flip = 1 if pred[3] > 0.5 else 0
 
         # set up return labels
-        type_labels = ['PA', 'AP', 'lateral', 'notCXR']
-        rotation_labels = ['0', '90', '180', '270']
-        inversion_labels = ['No', 'Yes']
-        lateral_flip_labels = ['No', 'Yes']
+        type_labels = ["PA", "AP", "lateral", "notCXR"]
+        rotation_labels = ["0", "90", "180", "270"]
+        inversion_labels = ["No", "Yes"]
+        lateral_flip_labels = ["No", "Yes"]
 
         # return dict
-        return {"Type": type_labels[im_type],
-                "Rotation": rotation_labels[im_rot],
-                "Inversion": inversion_labels[im_inv],
-                "Lateral_Flip": lateral_flip_labels[im_flip],
-                "Type_Probs_PA_AP_lateral_notCXR": list(pred[0][0]),
-                "Rotation_Probs_0_90_180_270": list(pred[1][0]),
-                "Inversion_Probs_No_Yes": [1-pred[2][0][0], pred[2][0][0]],
-                "Lateral_Flip_Probs_No_Yes": [1-pred[3][0][0], pred[3][0][0]]}
+        return {
+            "Type": type_labels[im_type],
+            "Rotation": rotation_labels[im_rot],
+            "Inversion": inversion_labels[im_inv],
+            "Lateral_Flip": lateral_flip_labels[im_flip],
+            "Type_Probs_PA_AP_lateral_notCXR": list(pred[0][0]),
+            "Rotation_Probs_0_90_180_270": list(pred[1][0]),
+            "Inversion_Probs_No_Yes": [1 - pred[2][0][0], pred[2][0][0]],
+            "Lateral_Flip_Probs_No_Yes": [1 - pred[3][0][0], pred[3][0][0]],
+        }

@@ -1,14 +1,20 @@
 from opencxr.utils.mask_crop import crop_with_params, uncrop_with_params
-from opencxr.utils.resize_rescale import resize_to_x_y, un_pad_axis_with_total, pad_axis_with_total
+from opencxr.utils.resize_rescale import (
+    resize_to_x_y,
+    un_pad_axis_with_total,
+    pad_axis_with_total,
+)
 
-size_change_resize_to_x_y = 'sc_resize_to_x_y'
-size_change_pad_axis_with_total = 'sc_pad_axis_with_total'
-size_change_unpad_axis_with_total = 'sc_unpad_axis_with_total'
-size_change_crop_with_params = 'sc_crop_with_params'
-size_change_uncrop_with_params = 'sc_uncrop_with_params'
+size_change_resize_to_x_y = "sc_resize_to_x_y"
+size_change_pad_axis_with_total = "sc_pad_axis_with_total"
+size_change_unpad_axis_with_total = "sc_unpad_axis_with_total"
+size_change_crop_with_params = "sc_crop_with_params"
+size_change_uncrop_with_params = "sc_uncrop_with_params"
 
 
-def apply_size_changes_to_img(img_np, spacing, size_changes, anti_aliasing=True, interp_order=1):
+def apply_size_changes_to_img(
+    img_np, spacing, size_changes, anti_aliasing=True, interp_order=1
+):
     """
     Applies specified size changes to an image.  Algorithms which change size (e.g cxr standardization) can return size_changes information in list format
     This method is a utility to allow users to apply those same size changes to another image.
@@ -30,8 +36,14 @@ def apply_size_changes_to_img(img_np, spacing, size_changes, anti_aliasing=True,
         if op_to_perform == size_change_resize_to_x_y:
             new_size_0 = params[2]
             new_size_1 = params[3]
-            img_np, spacing, _ = resize_to_x_y(img_np, spacing, new_size_0, new_size_1, anti_aliasing=anti_aliasing,
-                                               interp_order=interp_order)
+            img_np, spacing, _ = resize_to_x_y(
+                img_np,
+                spacing,
+                new_size_0,
+                new_size_1,
+                anti_aliasing=anti_aliasing,
+                interp_order=interp_order,
+            )
 
         # if the operation is to pad a specified axis with constants
         elif op_to_perform == size_change_pad_axis_with_total:
@@ -51,13 +63,19 @@ def apply_size_changes_to_img(img_np, spacing, size_changes, anti_aliasing=True,
             img_np, _ = crop_with_params(img_np, [minx, maxx, miny, maxy])
 
         else:
-            print('ERROR, the operation', opt_to_perform, 'is not implemented in apply_size_changes_to_img')
+            print(
+                "ERROR, the operation",
+                opt_to_perform,
+                "is not implemented in apply_size_changes_to_img",
+            )
             return None
 
     return img_np, spacing
 
 
-def reverse_size_changes_to_img(img_np, spacing, size_changes, anti_aliasing=True, interp_order=1):
+def reverse_size_changes_to_img(
+    img_np, spacing, size_changes, anti_aliasing=True, interp_order=1
+):
     """
     Reverses specified size changes on the given image.  Algorithms which change size (e.g. cxr standardization) can return size_changes information in list format
     This method is a utility to allow users to reverse those size changes at a later stage on any image
@@ -81,8 +99,14 @@ def reverse_size_changes_to_img(img_np, spacing, size_changes, anti_aliasing=Tru
             return_to_size_0 = params[0]
             return_to_size_1 = params[1]
             # return to original size
-            img_np, spacing, _ = resize_to_x_y(img_np, spacing, return_to_size_0, return_to_size_1,
-                                               anti_aliasing=anti_aliasing, interp_order=interp_order)
+            img_np, spacing, _ = resize_to_x_y(
+                img_np,
+                spacing,
+                return_to_size_0,
+                return_to_size_1,
+                anti_aliasing=anti_aliasing,
+                interp_order=interp_order,
+            )
 
         # if the operation performed was a padding of a specified axis with constants
         elif op_to_perform == size_change_pad_axis_with_total:
@@ -101,10 +125,16 @@ def reverse_size_changes_to_img(img_np, spacing, size_changes, anti_aliasing=Tru
             miny = params[4]
             maxy = params[5]
             # undo the crop operation
-            img_np, _ = uncrop_with_params(img_np, orig_size_x, orig_size_y, [minx, maxx, miny, maxy])
+            img_np, _ = uncrop_with_params(
+                img_np, orig_size_x, orig_size_y, [minx, maxx, miny, maxy]
+            )
 
         else:
-            print('ERROR, the operation', op_to_perform, 'is not implemented in reverse_size_changes_to_img')
+            print(
+                "ERROR, the operation",
+                op_to_perform,
+                "is not implemented in reverse_size_changes_to_img",
+            )
             return None
 
     return img_np, spacing

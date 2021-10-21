@@ -11,5 +11,3 @@ from opencxr.algorithms import create_algorithm
 def load(opencxr_algorithm_name):
     algorithm = create_algorithm(opencxr_algorithm_name)
     return algorithm
-
-

@@ -9,7 +9,7 @@ from opencxr.utils.resize_rescale import resize_preserve_aspect_ratio
 from scipy import ndimage
 
 
-class Normalizer():
+class Normalizer:
     """
     Implements the method of Philipsen et al, IEEE Transactions on Medical Imaging, 2015
     https://ieeexplore.ieee.org/document/7073580
@@ -34,7 +34,7 @@ class Normalizer():
 
         curr_I_x = image
         for sigma_ind, sigma in enumerate(sigmas):
-            curr_L_x = ndimage.filters.gaussian_filter(curr_I_x, sigma, mode='wrap')
+            curr_L_x = ndimage.filters.gaussian_filter(curr_I_x, sigma, mode="wrap")
 
             bands[sigma_ind] = curr_I_x - curr_L_x
 
@@ -46,7 +46,6 @@ class Normalizer():
 
         # return the bands in reverse order of sigmas ([16,8,4,2,1])
         return bands[::-1]
-
 
     @classmethod
     def report_energy_bands(cls, bands, mask=1):
@@ -61,18 +60,22 @@ class Normalizer():
         means = []
         stdevs = []
         shape = bands[0].shape
-        if isinstance(mask, np.ndarray):  # if the mask provided is an array (a lung mask)
+        if isinstance(
+            mask, np.ndarray
+        ):  # if the mask provided is an array (a lung mask)
             for band in bands:
                 values = band[mask > 0]
                 means.append(values.mean())
                 stdevs.append(values.std())
         else:  # otherwise we have no lung mask, just use central 70% of the image
             for band in bands:
-                sub_im = band[int(0.15 * shape[0]):int(0.85 * shape[0]), int(0.15 * shape[1]):int(0.85 * shape[1])]
+                sub_im = band[
+                    int(0.15 * shape[0]) : int(0.85 * shape[0]),
+                    int(0.15 * shape[1]) : int(0.85 * shape[1]),
+                ]
                 means.append(sub_im.mean())
                 stdevs.append(sub_im.std())
         return means, stdevs
-
 
     @classmethod
     def reconstruct(cls, bands, means, stdevs, coefficients):
@@ -109,9 +112,13 @@ class Normalizer():
         # make sure the image is float
         img_np = img_np.astype(np.float64)
         # crop away black borders
-        img_np, size_changes_border_crop = crop_img_borders(img_np, in_thresh_factor=0.05)
+        img_np, size_changes_border_crop = crop_img_borders(
+            img_np, in_thresh_factor=0.05
+        )
         # resize to width of 2048
-        img_np, new_spacing, size_changes_2048 = resize_preserve_aspect_ratio(img_np, spacing, 2048, 0)
+        img_np, new_spacing, size_changes_2048 = resize_preserve_aspect_ratio(
+            img_np, spacing, 2048, 0
+        )
         # split into energy bands
         bands = cls.split_energy_bands(img_np, sigmas)
         # get means and stddevs of the energy bands
@@ -126,8 +133,11 @@ class Normalizer():
         img_mean = norm_70.mean()
         set_min = img_mean - 5.0
         set_max = img_mean + 5.0
-        readable_img = np.clip((new_max - new_min) * ((norm_70 - set_min) / (set_max - set_min)) + new_min, new_min,
-                               new_max).astype(np.uint16)
+        readable_img = np.clip(
+            (new_max - new_min) * ((norm_70 - set_min) / (set_max - set_min)) + new_min,
+            new_min,
+            new_max,
+        ).astype(np.uint16)
 
         # combine all size changes in a single list to return
         size_changes_border_crop.extend(size_changes_2048)
@@ -160,13 +170,16 @@ class Normalizer():
         new_min = 0
         new_max = 4095
         #
-        set_min = - 5.0
+        set_min = -5.0
         set_max = 5.0
 
         # rescale from range -5, +5 to 0,4095
         # and clip values that end up outside that range
-        readable_img = np.clip((new_max - new_min) * ((norm - set_min) / (set_max - set_min)) + new_min, new_min,
-                               new_max)
+        readable_img = np.clip(
+            (new_max - new_min) * ((norm - set_min) / (set_max - set_min)) + new_min,
+            new_min,
+            new_max,
+        )
 
         return readable_img
 
@@ -183,7 +196,9 @@ class Normalizer():
         """
 
         # do norm step 1 (central 70%)
-        norm_70, readable_img, new_spacing, size_changes = cls.get_norm_central_70(img_in, spacing)
+        norm_70, readable_img, new_spacing, size_changes = cls.get_norm_central_70(
+            img_in, spacing
+        )
 
         # do a lung segmentation on the norm image
         lung_seg_mask = lung_seg_algorithm.run(readable_img)
@@ -191,7 +206,7 @@ class Normalizer():
         # if the lung seg mask is completely empty this is probably not a lung image at all so we should fail gracefully
         # i.e. return an empty image
         if np.max(lung_seg_mask) == 0:
-            print('lung seg finds no lung so cxr standardization returning empty image')
+            print("lung seg finds no lung so cxr standardization returning empty image")
             return lung_seg_mask, new_spacing, size_changes
 
         # do norm step 2 using the lung segmentation image

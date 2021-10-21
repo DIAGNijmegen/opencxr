@@ -7,7 +7,10 @@ Created on Thu Feb  6 11:19:57 2020
 
 import numpy as np
 from opencxr.utils.mask_crop import crop_img_borders
-from opencxr.utils.resize_rescale import rescale_to_min_max, resize_long_edge_and_pad_to_square
+from opencxr.utils.resize_rescale import (
+    rescale_to_min_max,
+    resize_long_edge_and_pad_to_square,
+)
 
 
 def clip_at_percentiles(img_np, perc_low, perc_high):
@@ -41,8 +44,9 @@ def preprocess_img(img_x_y):
     img_x_y = clip_at_percentiles(img_x_y, 1, 99)
 
     # resize to 256 square image, preserving aspect ratio
-    img_x_y, _, _ = resize_long_edge_and_pad_to_square(img_x_y, [1, 1], 256, pad_value=0, anti_aliasing=True,
-                                                       interp_order=1)
+    img_x_y, _, _ = resize_long_edge_and_pad_to_square(
+        img_x_y, [1, 1], 256, pad_value=0, anti_aliasing=True, interp_order=1
+    )
 
     # re-convert to uint8 since resize returns float
     img_x_y = rescale_to_min_max(img_x_y, new_dtype=np.uint8, new_min=0, new_max=255)

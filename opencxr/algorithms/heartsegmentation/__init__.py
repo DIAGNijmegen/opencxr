@@ -12,7 +12,10 @@ from opencxr.algorithms.base_algorithm import BaseAlgorithm
 from opencxr.algorithms.heartsegmentation.model import unet
 from opencxr.utils import reverse_size_changes_to_img
 from opencxr.utils.mask_crop import tidy_segmentation_mask
-from opencxr.utils.resize_rescale import rescale_to_min_max, resize_long_edge_and_pad_to_square
+from opencxr.utils.resize_rescale import (
+    rescale_to_min_max,
+    resize_long_edge_and_pad_to_square,
+)
 import wget
 
 """
@@ -26,23 +29,40 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
         """
         Initialize the model and weights
         """
-        self.model = unet((512, 512, 1), k_size=3, optimizer='adam', depth=6, \
-                          downsize_filters_factor=2, batch_norm=True, \
-                          activation='selu', initializer='lecun_normal', upsampling=False, \
-                          dropout=False, n_convs_per_layer=2, lr=0.00018521094785555384)
+        self.model = unet(
+            (512, 512, 1),
+            k_size=3,
+            optimizer="adam",
+            depth=6,
+            downsize_filters_factor=2,
+            batch_norm=True,
+            activation="selu",
+            initializer="lecun_normal",
+            upsampling=False,
+            dropout=False,
+            n_convs_per_layer=2,
+            lr=0.00018521094785555384,
+        )
 
-        path_to_model_file = Path(__file__).parent.parent / "model_weights" / "heart_seg.h5"
+        path_to_model_file = (
+            Path(__file__).parent.parent / "model_weights" / "heart_seg.h5"
+        )
         path_to_model_resolved = str(path_to_model_file.resolve())
 
         # if the file does not exist (it's not included in whl file) then download it from github
         if not os.path.isfile(path_to_model_resolved):
-            print('First use of heart segmentation model, downloading the weights......')
-            file_url = 'https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/heart_seg.h5'
+            print(
+                "First use of heart segmentation model, downloading the weights......"
+            )
+            file_url = "https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/heart_seg.h5"
             os.makedirs(os.path.dirname(path_to_model_resolved), exist_ok=True)
             wget.download(file_url, path_to_model_resolved)
             if not os.path.isfile(path_to_model_resolved):
-                print('Failed to download file from', file_url)
-                print('Please check the URL is valid and the following location is writeable', path_to_model_resolved)
+                print("Failed to download file from", file_url)
+                print(
+                    "Please check the URL is valid and the following location is writeable",
+                    path_to_model_resolved,
+                )
                 return
 
         self.model.load_weights(path_to_model_resolved)
@@ -61,7 +81,6 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
         image /= std_train
 
         return image
-
 
     def process_image(self, input_image):
         """
@@ -87,7 +106,7 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
         return segment_map
 
     def name(self):
-        return 'HeartSegmentationAlgorithm'
+        return "HeartSegmentationAlgorithm"
 
     def resize_to_original(self, seg_map_np, size_changes):
         """
@@ -98,8 +117,9 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
         """
 
         # Just reverse the size changes that were applied to the original image
-        resized_seg_map, _ = reverse_size_changes_to_img(seg_map_np, [1, 1], size_changes, anti_aliasing=False,
-                                                         interp_order=0)
+        resized_seg_map, _ = reverse_size_changes_to_img(
+            seg_map_np, [1, 1], size_changes, anti_aliasing=False, interp_order=0
+        )
         resized_seg_map = rescale_to_min_max(resized_seg_map, np.uint8)
 
         return resized_seg_map
@@ -120,7 +140,9 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
             image = np.mean(image, axis=-1)
 
         # resize to 512 before passing to the model.  Keep record of the size changes for later
-        resized_img, new_spacing, size_changes = resize_long_edge_and_pad_to_square(image, (1, 1), 512)
+        resized_img, new_spacing, size_changes = resize_long_edge_and_pad_to_square(
+            image, (1, 1), 512
+        )
         # do basic preprocessing
         resized_img = self.preprocess(resized_img)
         # call the model to do the segmentation

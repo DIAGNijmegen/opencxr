@@ -29,18 +29,22 @@ def read_file(in_img_location):
     """
     in_img_location = in_img_location.strip()
     if not os.path.isfile(in_img_location):
-        raise Exception('Unable to find file at {}'.format(in_img_location))
+        raise Exception("Unable to find file at {}".format(in_img_location))
     extension = os.path.splitext(in_img_location)[1]
     extension = extension.lower()
-    if extension == '.mhd' or extension == '.mha':
+    if extension == ".mhd" or extension == ".mha":
         return read_mhd_mha(in_img_location)
-    elif extension == '.dcm':
+    elif extension == ".dcm":
         return read_dicom(in_img_location)
-    elif extension == '.png':
+    elif extension == ".png":
         return read_png(in_img_location)
     else:
-        raise Exception('Do not recognize extension {} in location {}. \
-        Unable to read file'.format(extension, in_img_location))
+        raise Exception(
+            "Do not recognize extension {} in location {}. \
+        Unable to read file".format(
+                extension, in_img_location
+            )
+        )
 
 
 def read_png(in_img_location):
@@ -58,7 +62,7 @@ def read_png(in_img_location):
 
     # Can only handle input images with 2 or 3 axes
     if len(init_np_array.shape) < 2 or len(init_np_array.shape) > 3:
-        print('unable to proceed(1), ', im, ' img shape is ', init_np_array.shape)
+        print("unable to proceed(1), ", im, " img shape is ", init_np_array.shape)
         return
     # If 3 axes then assume one of them is a channel axis, need to make sure it is in last position
     if len(init_np_array.shape) == 3:
@@ -77,14 +81,14 @@ def read_png(in_img_location):
             init_np_array = color.rgb2gray(init_np_array)
             # print('did 1 transform shape now is ', init_np_array.shape)
         else:
-            print('unable to proceed(2), ', im, ' img shape is ', init_np_array.shape)
+            print("unable to proceed(2), ", im, " img shape is ", init_np_array.shape)
             return
 
     # return with x, y (width, height) axis ordering not numpy usual ordering
     img_np_x_y = np.transpose(init_np_array)
     spacing_x_y = np.transpose(itk_img.GetSpacing())
 
-    return img_np_x_y, spacing_x_y, ''
+    return img_np_x_y, spacing_x_y, ""
 
 
 def read_mhd_mha(in_img_location):
@@ -101,7 +105,7 @@ def read_mhd_mha(in_img_location):
     img_np_x_y = np.squeeze(np.transpose(sitk.GetArrayFromImage(itk_img)))
     spacing_x_y = np.transpose(itk_img.GetSpacing())
 
-    return img_np_x_y, spacing_x_y, ''
+    return img_np_x_y, spacing_x_y, ""
 
 
 def read_dicom(in_img_location):
@@ -128,11 +132,16 @@ def read_dicom(in_img_location):
 
     # Need this for headers, but pydicom cannot read pixel data if it is
     # stored in jpeg2000 compression
-    pydicom_version = pydicom.dcmread(in_img_location)  #try this??? ds = pydicom.filereader.read_partial(f, stop_when=pixel_data_reached)
+    pydicom_version = pydicom.dcmread(
+        in_img_location
+    )  # try this??? ds = pydicom.filereader.read_partial(f, stop_when=pixel_data_reached)
 
     # Make a correction because sitk seems to read pixel spacing only from the ImagerPixelSpacing dicom tag
     # In some images that tag is absent but the tag PixelSpacing is available
-    if 'PixelSpacing' in pydicom_version and not 'ImagerPixelSpacing' in pydicom_version:
+    if (
+        "PixelSpacing" in pydicom_version
+        and not "ImagerPixelSpacing" in pydicom_version
+    ):
         # print('PixelSpacing dicom tag is ', pydicom_version.PixelSpacing)
         spacing_x_y = pydicom_version.PixelSpacing
 
@@ -155,16 +164,24 @@ def write_file(out_img_location, img_np_x_y, spacing_x_y=[1.0, 1.0]):
     os.makedirs(out_img_dir, exist_ok=True)
 
     extension = os.path.splitext(out_img_location)[1]
-    if extension == '.mhd' or extension == '.mha':
+    if extension == ".mhd" or extension == ".mha":
         write_mhd_mha(out_img_location, img_np_x_y, spacing_x_y)
-    elif extension == '.png':
+    elif extension == ".png":
         write_png(out_img_location, img_np_x_y)
     else:
-        raise Exception('Do not recognize extension {} in location {},\
-                     unable to write file'.format(extension, out_img_location))
+        raise Exception(
+            "Do not recognize extension {} in location {},\
+                     unable to write file".format(
+                extension, out_img_location
+            )
+        )
     if not os.path.isfile(out_img_location):
-        raise Exception('Failed to write image to location\
-                                         {}'.format(out_img_location))
+        raise Exception(
+            "Failed to write image to location\
+                                         {}".format(
+                out_img_location
+            )
+        )
 
 
 def write_png(out_img_location, img_np_x_y):
@@ -177,21 +194,29 @@ def write_png(out_img_location, img_np_x_y):
 
     # still using pypng for this because sitk only supports writing uchar and ushort png images
     img_np_y_x = np.transpose(img_np_x_y)
-    with open(out_img_location, 'wb') as f:
-        if img_np_y_x.dtype == 'uint16':
-            writer = png.Writer(width=img_np_y_x.shape[1],
-                                height=img_np_y_x.shape[0],
-                                greyscale=True,
-                                bitdepth=16)
-        elif img_np_y_x.dtype == 'uint8':
-            writer = png.Writer(width=img_np_y_x.shape[1],
-                                height=img_np_y_x.shape[0],
-                                greyscale=True,
-                                bitdepth=8)
+    with open(out_img_location, "wb") as f:
+        if img_np_y_x.dtype == "uint16":
+            writer = png.Writer(
+                width=img_np_y_x.shape[1],
+                height=img_np_y_x.shape[0],
+                greyscale=True,
+                bitdepth=16,
+            )
+        elif img_np_y_x.dtype == "uint8":
+            writer = png.Writer(
+                width=img_np_y_x.shape[1],
+                height=img_np_y_x.shape[0],
+                greyscale=True,
+                bitdepth=8,
+            )
         else:
-            raise Exception('only 8 bit and 16 bit png writing supported.\
+            raise Exception(
+                "only 8 bit and 16 bit png writing supported.\
                             Please provide np array as uint16 or uint8. \
-                            Failed to write {}'.format(out_img_location))
+                            Failed to write {}".format(
+                    out_img_location
+                )
+            )
         img_as_list_rows = img_np_y_x.tolist()
         writer.write(f, img_as_list_rows)
 
