@@ -1,6 +1,7 @@
 ## OpenCXR
 
 [![PyPI version](https://badge.fury.io/py/opencxr.svg)](https://badge.fury.io/py/opencxr)
+[![PyPI version](https://img.shields.io/badge/codestyle-black-black)](https://img.shields.io/badge/codestyle-black-black)
 
 OpenCXR is an open source collection of chest x-ray (CXR) algorithms and utilities maintained by the 
 Diagnostic Image Analysis Group (DIAG) at Radboud University Medical Center, Nijmegen, the Netherlands.
