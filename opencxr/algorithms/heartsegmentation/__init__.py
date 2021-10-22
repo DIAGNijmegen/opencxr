@@ -66,14 +66,15 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
                 return
         if not os.stat(path_to_model_resolved).st_size > 150000000: # model file needs to be larger than 150MB or it was not pulled correctly
             print(
-                "Heart segmentation model file seems incorrect (size ", os.stat(path_to_model_resolved) , ") downloading the weights......",
+                "Heart segmentation model file seems incorrect (size ", os.stat(path_to_model_resolved).st_size , ") downloading the weights......",
                 path_to_model_resolved
             )
             os.remove(path_to_model_resolved) # first delete the file, because wget will not overwrite
+            print('file now exists1?', os.path.isfile(path_to_model_resolved))
             file_url = "https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/heart_seg.h5"
             wget.download(file_url, path_to_model_resolved)
-            print('file now exists?', os.path.isfile(path_to_model_resolved))
-            print('file size now', os.stat(path_to_model_resolved))
+            print('file now exists2?', os.path.isfile(path_to_model_resolved))
+            print('file size now', os.stat(path_to_model_resolved).st_size)
 
         self.model.load_weights(path_to_model_resolved)
 
