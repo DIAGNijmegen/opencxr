@@ -69,8 +69,8 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
                 "Heart segmentation model file seems incorrect, downloading the weights......",
                 path_to_model_resolved
             )
+            os.remove(path_to_model_resolved) # first delete the file, because wget will not overwrite
             file_url = "https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/heart_seg.h5"
-            os.makedirs(os.path.dirname(path_to_model_resolved), exist_ok=True)
             wget.download(file_url, path_to_model_resolved)
 
         self.model.load_weights(path_to_model_resolved)
