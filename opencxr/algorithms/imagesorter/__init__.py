@@ -53,6 +53,13 @@ class ImageSorterAlgorithm(BaseAlgorithm):
                     path_to_model_resolved,
                 )
                 return
+            if not os.stat(path_to_model_resolved).st_size > 150000000: # model file needs to be larger than 150MB or it was not pulled correctly
+                print(
+                    "ImageSorter model file seems incorrect (size ", os.stat(path_to_model_resolved).st_size , ") downloading the weights......",
+                    path_to_model_resolved
+                )
+                os.remove(path_to_model_resolved) # first delete the file, because wget will not overwrite
+                wget.download(file_url, path_to_model_resolved)
 
         self.model = load_model(path_to_model_resolved)
 

@@ -72,10 +72,7 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
                 path_to_model_resolved
             )
             os.remove(path_to_model_resolved) # first delete the file, because wget will not overwrite
-            print('file now exists1?', os.path.isfile(path_to_model_resolved))
             wget.download(file_url, path_to_model_resolved)
-            print('file now exists2?', os.path.isfile(path_to_model_resolved))
-            print('file size now', os.stat(path_to_model_resolved).st_size)
 
         self.model.load_weights(path_to_model_resolved)
 
