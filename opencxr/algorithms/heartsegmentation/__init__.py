@@ -49,6 +49,7 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
         )
         path_to_model_resolved = str(path_to_model_file.resolve())
 
+        file_url = 'https://github.com/DIAGNijmegen/opencxr/raw/master/opencxr/algorithms/model_weights/heart_seg.h5'
         if os.path.isfile(path_to_model_resolved):
             print('found model file with size', os.stat(path_to_model_resolved).st_size)
         # if the file does not exist (it's not included in whl file) then download it from github
@@ -56,7 +57,6 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
             print(
                 "First use of heart segmentation model, downloading the weights......"
             )
-            file_url = "https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/heart_seg.h5"
             os.makedirs(os.path.dirname(path_to_model_resolved), exist_ok=True)
             wget.download(file_url, path_to_model_resolved)
             if not os.path.isfile(path_to_model_resolved):
@@ -73,7 +73,6 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
             )
             os.remove(path_to_model_resolved) # first delete the file, because wget will not overwrite
             print('file now exists1?', os.path.isfile(path_to_model_resolved))
-            file_url = "https://github.com/DIAGNijmegen/opencxr/tree/master/opencxr/algorithms/model_weights/heart_seg.h5"
             wget.download(file_url, path_to_model_resolved)
             print('file now exists2?', os.path.isfile(path_to_model_resolved))
             print('file size now', os.stat(path_to_model_resolved).st_size)
