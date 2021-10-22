@@ -49,6 +49,8 @@ class HeartSegmentationAlgorithm(BaseAlgorithm):
         )
         path_to_model_resolved = str(path_to_model_file.resolve())
 
+        if os.path.isfile(path_to_model_resolved):
+            print('found model file with size', os.stat(path_to_model_resolved).st_size)
         # if the file does not exist (it's not included in whl file) then download it from github
         if not os.path.isfile(path_to_model_resolved):
             print(

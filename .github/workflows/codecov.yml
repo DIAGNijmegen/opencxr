@@ -16,6 +16,8 @@ jobs:
         python -m pip install --upgrade pip
     - name: checkout
       uses: actions/checkout@v2
+      with:
+        lfs: true
     - name: Generate coverage report
       run: |
         pip install -e .
