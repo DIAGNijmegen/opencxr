@@ -40,7 +40,7 @@ class ImageSorterAlgorithm(BaseAlgorithm):
         )
         path_to_model_resolved = str(path_to_model_file.resolve())
 
-        file_url = 'https://github.com/DIAGNijmegen/opencxr/raw/master/opencxr/algorithms/model_weights/image_sorter.hdf5'
+        file_url = "https://github.com/DIAGNijmegen/opencxr/raw/master/opencxr/algorithms/model_weights/image_sorter.hdf5"
         # if the file does not exist (it's not included in whl file) then download it from github
         if not os.path.isfile(path_to_model_resolved):
             print("First use of imagesorter model, downloading the weights......")
@@ -53,12 +53,18 @@ class ImageSorterAlgorithm(BaseAlgorithm):
                     path_to_model_resolved,
                 )
                 return
-        if not os.stat(path_to_model_resolved).st_size > 150000000: # model file needs to be larger than 150MB or it was not pulled correctly
+        if (
+            not os.stat(path_to_model_resolved).st_size > 150000000
+        ):  # model file needs to be larger than 150MB or it was not pulled correctly
             print(
-                "ImageSorter model file seems incorrect (size ", os.stat(path_to_model_resolved).st_size , ") downloading the weights......",
-                path_to_model_resolved
+                "ImageSorter model file seems incorrect (size ",
+                os.stat(path_to_model_resolved).st_size,
+                ") downloading the weights......",
+                path_to_model_resolved,
             )
-            os.remove(path_to_model_resolved) # first delete the file, because wget will not overwrite
+            os.remove(
+                path_to_model_resolved
+            )  # first delete the file, because wget will not overwrite
             wget.download(file_url, path_to_model_resolved)
 
         self.model = load_model(path_to_model_resolved)
