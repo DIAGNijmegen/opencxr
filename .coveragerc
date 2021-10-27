@@ -1,4 +1,5 @@
 # when running checks on code coverage do not check tests themselves
 [run]
 omit = tests/*
+        ./setup.py
 
