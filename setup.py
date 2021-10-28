@@ -47,5 +47,5 @@ setup(
     keywords="opencxr",
     url="https://github.com/DIAGNijmegen/opencxr",
     packages=find_packages(),
-    version="1.1.0",
+    version="1.2.0",
 )
