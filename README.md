@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/DIAGNijmegen/opencxr/actions/workflows/tests.yml/badge.svg)](https://github.com/DIAGNijmegen/opencxr/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/gh/DIAGNijmegen/opencxr/branch/master/graph/badge.svg)](https://codecov.io/gh/DIAGNijmegen/opencxr)
-[![PyPI version](https://badge.fury.io/py/opencxr.svg)](https://badge.fury.io/py/opencxr)
+[![PyPI version](https://badge.fury.io/py/opencx)](https://badge.fury.io/py/opencxr)
 [![PyPI version](https://img.shields.io/badge/codestyle-black-black)](https://img.shields.io/badge/codestyle-black-black)
 
 OpenCXR is an open source collection of chest x-ray (CXR) algorithms and utilities maintained by the 
