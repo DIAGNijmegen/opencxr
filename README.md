@@ -59,7 +59,46 @@ utilities.
 
 ## How to use OpenCXR
 
-COMING SOON !!!! This repository will be functional by 1st November 2021
+###Requirements
+ - [pip](https://pypi.org/project/pip/) (if you just want to use the algorithms/utilities)
+ - [git lfs](https://git-lfs.github.com/) (only if you want to clone this repository including model weights)
+
+###Installation
+You can get the latest version of OpenCXR by simply running the command below
+```
+pip install opencxr
+```
+
+###Getting Started
+A useful place to get started is to look at the test code for the algorithm you want to run.  You'll find a python file to test each algorithm in the [tests] folder.  
+Any algorithm can be loaded by calling my_algorithm = opencxr.load(algorithm_name) . Algorithm names are listed at the 
+top of [this file](https://github.com/DIAGNijmegen/opencxr/blob/master/opencxr/algorithms/__init__.py).  
+The loaded algorithm can then be run by calling my_algorithm.run(required_input).
+
+The code snippet below gives a suggestion of how to get started with the cxr standardization algorithm. 
+
+```
+import opencxr
+from opencxr.utils.file_io import read_file, write_file
+
+# an algorithm is created with a call to opencxr.load() .  
+cxr_std_algorithm = opencxr.load(opencxr.algorithms.cxr_standardize)
+
+# provide the path to the file you want to read in
+full_cxr_file_path = input_folder_cxr + '/' + input_cxr_file
+
+# read the  file (supports dcm, mha, mhd, png)
+img_np, spacing, dcm_tags = read_file(full_cxr_file_path)
+
+# Do standardization of intensities, cropping to lung bounding box, and resizing to 1024 square
+std_img, new_spacing, size_changes = cxr_std_algorithm.run(img_np, spacing)
+
+# write the standardized file to disk
+output_cxr_loc = output_folder_cxr + '/' + input_cxr_file
+write_file(output_cxr_loc, std_img, new_spacing)
+```
+
+
 
 <!---
 ### Requirements
