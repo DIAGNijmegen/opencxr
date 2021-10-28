@@ -70,7 +70,8 @@ pip install opencxr
 ```
 
 ### Getting Started
-A useful place to get started is to look at the test code for the algorithm you want to run.  You'll find a python file to test each algorithm in the [tests] folder.  
+A useful place to get started is to look at the test code for the algorithm you want to run.  
+You'll find a python file to test each algorithm in the [tests](https://github.com/DIAGNijmegen/opencxr/tree/master/tests) folder.  
 Any algorithm can be loaded by calling my_algorithm = opencxr.load(algorithm_name) . Algorithm names are listed at the 
 top of [this file](https://github.com/DIAGNijmegen/opencxr/blob/master/opencxr/algorithms/__init__.py).  
 The loaded algorithm can then be run by calling my_algorithm.run(required_input).
