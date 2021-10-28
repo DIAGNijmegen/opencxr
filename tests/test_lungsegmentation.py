@@ -10,7 +10,7 @@ import opencxr
 from opencxr.utils.file_io import read_file, write_file
 
 
-def run_lung_seg():
+def test_lung_seg():
     # Load the algorithm
     lungseg_algorithm = opencxr.load(opencxr.algorithms.lung_seg)
     # read an image from disk
@@ -27,17 +27,15 @@ def run_lung_seg():
     f_out = str(f_out.resolve())
     write_file(f_out, seg_map, spacing)
 
-    if seg_map.shape == img_np.shape and not np.max(seg_map) == 0:
+    passed = seg_map.shape == img_np.shape and not np.max(seg_map) == 0
+
+    if passed:
         print("Lung Segmentation test completed successfully")
-        return 1
     else:
         print("Lung Segmentation results not as expected")
-        return 0
 
-
-def test_lung_seg():
-    assert run_lung_seg() == 1
+    assert passed
 
 
 if __name__ == "__main__":
-    run_lung_seg()
+    test_lung_seg()

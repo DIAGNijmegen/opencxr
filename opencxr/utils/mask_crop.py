@@ -28,15 +28,16 @@ def set_non_mask_constant(img_np, mask_np, dilation_in_pixels=0, constant_val=0)
     :param constant_val: the value to set non-mask as
     :return: The image as np with non mask areas set to the constant value
     """
-
     if dilation_in_pixels > 0:
         struct_element = np.ones((dilation_in_pixels, dilation_in_pixels)).astype(bool)
         mask_np = binary_dilation(mask_np, structure=struct_element).astype(
             mask_np.dtype
         )
 
-    np.putmask(img_np, mask_np < 1, constant_val)
-    return img_np
+    # make a copy because putmask will change the original
+    img_np_copy = np.copy(img_np)
+    np.putmask(img_np_copy, mask_np < 1, constant_val)
+    return img_np_copy
 
 
 def crop_to_mask(img_np, spacing, mask_np, margin_in_mm):
@@ -135,9 +136,9 @@ def crop_img_borders_by_edginess(
         for start_edgy_index in range(0, len(starts_ends_edgy_regions), 2):
             start_edgy = starts_ends_edgy_regions[start_edgy_index]
             end_edgy = starts_ends_edgy_regions[start_edgy_index + 1]
-            print("found start and end", start_edgy, end_edgy)
+            # print("found start and end", start_edgy, end_edgy)
             width_edgy = end_edgy - start_edgy + 1
-            print("found width ", width_edgy)
+            # print("found width ", width_edgy)
 
             dist_next_edgy = 10000
             dist_prev_edgy = 10000

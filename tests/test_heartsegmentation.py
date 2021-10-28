@@ -11,7 +11,7 @@ import opencxr
 from opencxr.utils.file_io import read_file, write_file
 
 
-def run_heart_seg():
+def test_heart_seg():
     # Load the heart segmentation algorithm
     heartseg_algorithm = opencxr.load(opencxr.algorithms.heart_seg)
     # read in a test image
@@ -28,17 +28,15 @@ def run_heart_seg():
     f_out = str(f_out.resolve())
     write_file(f_out, seg_map, spacing)
 
-    if seg_map.shape == img_np.shape and not np.max(seg_map) == 0:
+    passed = seg_map.shape == img_np.shape and not np.max(seg_map) == 0
+
+    if passed:
         print("Heart Segmentation test completed successfully")
-        return 1
     else:
         print("Heart Segmentation results not as expected")
-        return 0
 
-
-def test_heart_seg():
-    assert run_heart_seg() == 1
+    assert passed
 
 
 if __name__ == "__main__":
-    run_heart_seg()
+    test_heart_seg()

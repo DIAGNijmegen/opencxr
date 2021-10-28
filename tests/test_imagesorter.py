@@ -10,7 +10,7 @@ import opencxr
 from opencxr.utils.file_io import read_file
 
 
-def run_imagesorter():
+def test_imagesorter():
     # Load the algorithm
     img_sorter_algorithm = opencxr.load(opencxr.algorithms.image_sorter)
     # read in a test image
@@ -94,17 +94,15 @@ def run_imagesorter():
     else:
         print("Failed to match last four keys checked", result, expected_result)
 
-    if first_four_keys_passed and last_four_keys_passed:
+    passed = first_four_keys_passed and last_four_keys_passed
+
+    if passed:
         print("Image Sorter test completed successfully")
-        return 1
     else:
         print("Image Sorter results not as expected")
-        return 0
 
-
-def test_imagesorter():
-    assert run_imagesorter() == 1
+    assert passed
 
 
 if __name__ == "__main__":
-    run_imagesorter()
+    test_imagesorter()

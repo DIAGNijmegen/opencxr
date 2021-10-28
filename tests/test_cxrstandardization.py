@@ -11,7 +11,7 @@ from opencxr.utils.file_io import read_file, write_file
 import numpy as np
 
 
-def run_cxrstandardization():
+def test_cxrstandardization():
     # read in and standardize an image
     # first get the file path relative to current location
     f_in = Path(__file__).parent / "resources" / "images" / "c0002.mha"
@@ -42,22 +42,20 @@ def run_cxrstandardization():
     resized_img_worked = final_norm_img.shape == img_resized_to_test.shape
     resized_spacing_worked = new_spacing == new_spacing_to_test
 
-    if (
+    passed = (
         final_norm_img.shape == (1024, 1024)
         and not np.max(final_norm_img) == 0
         and (final_norm_img.shape == img_resized_to_test.shape)
         and (new_spacing == new_spacing_to_test)
-    ):
-        print("CXR standardization test completed successfully")
-        return 1
+    )
+
+    if passed:
+        print("CXR Standardization test completed successfully")
     else:
-        print("CXR standardization results not as expected")
-        return 0
+        print("CXR Standardization test failed")
 
-
-def test_cxrstandardization():
-    assert run_cxrstandardization() == 1
+    assert passed
 
 
 if __name__ == "__main__":
-    run_cxrstandardization()
+    test_cxrstandardization()
