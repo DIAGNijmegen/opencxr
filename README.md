@@ -59,17 +59,17 @@ utilities.
 
 ## How to use OpenCXR
 
-###Requirements
+### Requirements
  - [pip](https://pypi.org/project/pip/) (if you just want to use the algorithms/utilities)
  - [git lfs](https://git-lfs.github.com/) (only if you want to clone this repository including model weights)
 
-###Installation
+### Installation
 You can get the latest version of OpenCXR by simply running the command below
 ```
 pip install opencxr
 ```
 
-###Getting Started
+### Getting Started
 A useful place to get started is to look at the test code for the algorithm you want to run.  You'll find a python file to test each algorithm in the [tests] folder.  
 Any algorithm can be loaded by calling my_algorithm = opencxr.load(algorithm_name) . Algorithm names are listed at the 
 top of [this file](https://github.com/DIAGNijmegen/opencxr/blob/master/opencxr/algorithms/__init__.py).  
@@ -97,63 +97,5 @@ std_img, new_spacing, size_changes = cxr_std_algorithm.run(img_np, spacing)
 output_cxr_loc = output_folder_cxr + '/' + input_cxr_file
 write_file(output_cxr_loc, std_img, new_spacing)
 ```
-
-
-
-<!---
-### Requirements
-git lfs
-pip
-
-
-### Installing
- * clone this repository to your computer
- * get the model weights from [here](https://drive.google.com/drive/folders/1jif0ozt3-FZFGw-x9Qx_QRBSiw6dikM_?usp=sharing)   
-   and store them in folder algorithms/model_weights (note that the CXR standardization algorithm does not use a trained neural network and so does not have a model weights file)
- * add the path to the cloned repository to your Python Path
- * use the file opencxr_env.yml (in root folder) to set up a conda environment with the correct packages installed  
-   `conda env create --name my_opencxr_env --file opencxr_env.yml`
- * activate the conda environment before running any further commands  
-   `conda activate my_opencxr_env`
-
-### Running an algorithm
-The easiest way to see how to run the algorithm you are interested in is to look for the algorithm test code in the *tests* folder.
-i.e.  
- * tests/test_cxrstandardization.py
- * tests/test_heartsegmentation.py
- * tests/test_imagesorter.py
- * tests/test_lungsegmentation.py
-
-Each of these files contains a minimal code snippet to run the algorithm in question on a sample image.  The principle in each
-case is the same: Load the algorithm, read an image, run the algorithm.  The expected returned objects are different depending what algorithm you run.
-
-
-Note that the heart and lung segmentation algorithms are designed to work on raw PA CXR images, 
-however if performance is poor it is likely to be improved by applying CXR standardization to your images first.  
-
-A sample code snippet for lung segmentation is provided below:
-```python
-import opencxr
-from opencxr.utils.file_io import read_file, write_file
-
-# Load the algorithm
-lungseg_algorithm = opencxr.load(opencxr.algorithms.lung_seg)
-# read an image from disk
-img_np, spacing, dicom_tags = read_file('input_path/input_file.mha') # supports mha, mhd, png, dcm
-# run the lung segmentation algorithm on the image
-seg_map = lungseg_algorithm.run(img_np)
-# write the output segmentation to disk
-write_file('output_path/output_file.mha', seg_map, spacing)
-```
-
-### License ???
-
-OpenCXR is licensed with
-the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/) @TODO is the license correct? @TODO create a LICENSE file in the repository.
-
-
-### Questions ???
-Do we want to give an email, or just let people create issues?
--->
 
 
