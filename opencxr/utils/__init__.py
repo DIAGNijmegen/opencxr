@@ -54,18 +54,22 @@ def apply_size_changes_to_img(
 
         # if the operation is to crop using specified x and y values
         elif op_to_perform == size_change_crop_with_params:
-            # orig_size_x = params[0]
-            # orig_size_y = params[1]
+            orig_size_x = params[0]
+            orig_size_y = params[1]
             minx = params[2]
             maxx = params[3]
             miny = params[4]
             maxy = params[5]
             img_np, _ = crop_with_params(img_np, [minx, maxx, miny, maxy])
 
+        elif op_to_perform == size_change_unpad_axis_with_total:
+            axis = params[0]
+            total_pad = params[1]
+            img_np, _ = un_pad_axis_with_total(img_np, axis, total_pad)
         else:
             print(
                 "ERROR, the operation",
-                opt_to_perform,
+                op_to_perform,
                 "is not implemented in apply_size_changes_to_img",
             )
             return None
