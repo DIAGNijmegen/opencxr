@@ -193,17 +193,17 @@ def unet(
         if optimizer == "adam":
             optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         elif optimizer == "RMSprop":
-            optimizer = keras.optimizers.RMSprop(learning_rate=lr, decay=1e-3)
+            optimizer = keras.optimizers.legacy.RMSprop(learning_rate=lr, decay=1e-3)
         elif optimizer == "adagrad":
             optimizer = keras.optimizers.Adagrad(learning_rate=lr)
         elif optimizer == "sgd":
-            optimizer = keras.optimizers.SGD(
+            optimizer = keras.optimizers.legacy.SGD(
                 learning_rate=lr, decay=1e-6, momentum=0.9, nesterov=True
             )
 
     else:  # use default values for the optimizers.
         if optimizer == "sgd":
-            optimizer = keras.optimizers.SGD(
+            optimizer = keras.optimizers.legacy.SGD(
                 learning_rate=0.01, decay=1e-6, momentum=0.9, nesterov=True
             )
 
